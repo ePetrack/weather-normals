@@ -51,36 +51,103 @@
   }
 
   // ---------------------------------------------------------------------
-  // ENSO (El Niño Southern Oscillation) phase per calendar year, based on
-  // NOAA CPC's Oceanic Niño Index (ONI): El Niño = ONI >= +0.5 for 5+
-  // overlapping 3-month seasons, La Niña = ONI <= -0.5, otherwise neutral.
-  // Each calendar year gets a single label for whichever phase it's
-  // conventionally grouped with in NOAA's published ENSO-year lists — a
-  // simplification for years where the phase actually flipped mid-year
-  // (e.g. 1998, 2010, 2016 all start in one phase and end in another).
-  // 2024–2026 reflect the verified record as of August 2026: both the
-  // 2024-25 and 2025-26 winters came in neutral: 2026 itself is still
-  // in progress, with El Niño developing (not yet confirmed) in August.
+  // ENSO (El Niño Southern Oscillation) phase per calendar year, split by
+  // meteorological season for the year-rings chart's segmented ring. Winter
+  // spans the Dec/Jan seam, so it appears as two segments per ring
+  // (Jan-Feb tail of one winter, Dec onset of the next) that can
+  // legitimately differ.
+  //
+  // Source: NOAA CPC's Oceanic Niño Index (ONI), official methodology
+  // (El Niño/La Niña declared once the +-0.5 SST-anomaly threshold holds
+  // for 5+ consecutive overlapping 3-month seasons). Values pulled from
+  // https://raw.githubusercontent.com/ahuang11/oni/master/oni.csv, a
+  // documented re-derivation of NOAA's own
+  // https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt — each of the
+  // 12 overlapping seasons (DJF, JFM, ... NDJ) mapped to its center month,
+  // then averaged into the 5 segments below (majority phase, mean anomaly).
+  // `null` means that segment hasn't happened/been published yet (only
+  // relevant to the current partial year) — rendered as "pending", not
+  // silently defaulted to neutral.
   // ---------------------------------------------------------------------
-  const ENSO_PHASE_BY_YEAR = {
-    1991: "nino", 1992: "neutral", 1993: "nino", 1994: "nino", 1995: "nina",
-    1996: "neutral", 1997: "nino", 1998: "nina", 1999: "nina", 2000: "nina",
-    2001: "neutral", 2002: "nino", 2003: "neutral", 2004: "nino", 2005: "nina",
-    2006: "nino", 2007: "nina", 2008: "nina", 2009: "nino", 2010: "nina",
-    2011: "nina", 2012: "neutral", 2013: "neutral", 2014: "neutral", 2015: "nino",
-    2016: "neutral", 2017: "nina", 2018: "nino", 2019: "nino", 2020: "nina",
-    2021: "nina", 2022: "nina", 2023: "nino", 2024: "neutral", 2025: "neutral",
-    2026: "neutral",
-  };
-  const ENSO_PHASE_LABELS = { nino: "El Niño", nina: "La Niña", neutral: "Neutral" };
-  const ENSO_PHASE_VARS = { nino: "--series-orange", nina: "--series-aqua", neutral: "--series-normal" };
+  const SEASONS = [
+    { key: "winterTail", label: "Winter (Jan–Feb)", startIdx: 0, endIdx: 60 },
+    { key: "spring", label: "Spring (Mar–May)", startIdx: 60, endIdx: 152 },
+    { key: "summer", label: "Summer (Jun–Aug)", startIdx: 152, endIdx: 244 },
+    { key: "fall", label: "Fall (Sep–Nov)", startIdx: 244, endIdx: 335 },
+    { key: "winterOnset", label: "Winter (Dec)", startIdx: 335, endIdx: 366 },
+  ];
 
-  function ensoPhase(year) {
-    return ENSO_PHASE_BY_YEAR[year] || "neutral";
-  }
+  const SEASON_PHASE_BY_YEAR = {
+    1991: { winterTail: ["neutral", 0.33], spring: ["neutral", 0.31], summer: ["nino", 0.67], fall: ["nino", 0.87], winterOnset: ["nino", 1.53] },
+    1992: { winterTail: ["nino", 1.67], spring: ["nino", 1.28], summer: ["neutral", 0.40], fall: ["neutral", -0.22], winterOnset: ["neutral", -0.13] },
+    1993: { winterTail: ["neutral", 0.20], spring: ["neutral", 0.62], summer: ["neutral", 0.38], fall: ["neutral", 0.10], winterOnset: ["neutral", 0.06] },
+    1994: { winterTail: ["neutral", 0.07], spring: ["neutral", 0.30], summer: ["neutral", 0.43], fall: ["nino", 0.77], winterOnset: ["nino", 1.09] },
+    1995: { winterTail: ["nino", 0.84], spring: ["neutral", 0.32], summer: ["neutral", -0.27], fall: ["nina", -0.93], winterOnset: ["nina", -0.98] },
+    1996: { winterTail: ["nina", -0.82], spring: ["neutral", -0.43], summer: ["neutral", -0.30], fall: ["neutral", -0.40], winterOnset: ["neutral", -0.49] },
+    1997: { winterTail: ["neutral", -0.43], spring: ["neutral", 0.31], summer: ["nino", 1.57], fall: ["nino", 2.29], winterOnset: ["nino", 2.39] },
+    1998: { winterTail: ["nino", 2.08], spring: ["nino", 0.96], summer: ["nina", -0.68], fall: ["nina", -1.38], winterOnset: ["nina", -1.57] },
+    1999: { winterTail: ["nina", -1.43], spring: ["nina", -1.02], summer: ["nina", -1.08], fall: ["nina", -1.29], winterOnset: ["nina", -1.65] },
+    2000: { winterTail: ["nina", -1.53], spring: ["nina", -0.86], summer: ["nina", -0.57], fall: ["nina", -0.64], winterOnset: ["nina", -0.74] },
+    2001: { winterTail: ["nina", -0.60], spring: ["neutral", -0.34], summer: ["neutral", -0.11], fall: ["neutral", -0.28], winterOnset: ["neutral", -0.31] },
+    2002: { winterTail: ["neutral", -0.06], spring: ["neutral", 0.24], summer: ["nino", 0.77], fall: ["nino", 1.18], winterOnset: ["nino", 1.14] },
+    2003: { winterTail: ["nino", 0.78], spring: ["neutral", 0.03], summer: ["neutral", 0.04], fall: ["neutral", 0.30], winterOnset: ["neutral", 0.35] },
+    2004: { winterTail: ["neutral", 0.34], spring: ["neutral", 0.19], summer: ["neutral", 0.46], fall: ["nino", 0.68], winterOnset: ["nino", 0.69] },
+    2005: { winterTail: ["nino", 0.61], spring: ["neutral", 0.39], summer: ["neutral", -0.03], fall: ["neutral", -0.32], winterOnset: ["nina", -0.84] },
+    2006: { winterTail: ["nina", -0.81], spring: ["neutral", -0.36], summer: ["neutral", 0.12], fall: ["nino", 0.75], winterOnset: ["nino", 0.94] },
+    2007: { winterTail: ["nino", 0.44], spring: ["neutral", -0.27], summer: ["nina", -0.61], fall: ["nina", -1.30], winterOnset: ["nina", -1.60] },
+    2008: { winterTail: ["nina", -1.58], spring: ["nina", -1.05], summer: ["neutral", -0.40], fall: ["neutral", -0.38], winterOnset: ["nina", -0.73] },
+    2009: { winterTail: ["nina", -0.82], spring: ["neutral", -0.31], summer: ["neutral", 0.44], fall: ["nino", 1.03], winterOnset: ["nino", 1.56] },
+    2010: { winterTail: ["nino", 1.36], spring: ["neutral", 0.34], summer: ["nina", -1.02], fall: ["nina", -1.61], winterOnset: ["nina", -1.54] },
+    2011: { winterTail: ["nina", -1.18], spring: ["nina", -0.63], summer: ["neutral", -0.46], fall: ["nina", -0.92], winterOnset: ["nina", -0.92] },
+    2012: { winterTail: ["nina", -0.65], spring: ["neutral", -0.33], summer: ["neutral", 0.26], fall: ["neutral", 0.28], winterOnset: ["neutral", -0.10] },
+    2013: { winterTail: ["neutral", -0.29], spring: ["neutral", -0.22], summer: ["neutral", -0.32], fall: ["neutral", -0.15], winterOnset: ["neutral", -0.15] },
+    2014: { winterTail: ["neutral", -0.30], spring: ["neutral", 0.11], summer: ["neutral", 0.15], fall: ["nino", 0.51], winterOnset: ["nino", 0.77] },
+    2015: { winterTail: ["nino", 0.65], spring: ["nino", 0.83], summer: ["nino", 1.58], fall: ["nino", 2.44], winterOnset: ["nino", 2.75] },
+    2016: { winterTail: ["nino", 2.46], spring: ["nino", 1.08], summer: ["neutral", -0.27], fall: ["neutral", -0.61], winterOnset: ["neutral", -0.45] },
+    2017: { winterTail: ["neutral", -0.10], spring: ["neutral", 0.30], summer: ["neutral", 0.17], fall: ["nina", -0.57], winterOnset: ["nina", -0.86] },
+    2018: { winterTail: ["nina", -0.74], spring: ["neutral", -0.36], summer: ["neutral", 0.16], fall: ["nino", 0.77], winterOnset: ["nino", 0.92] },
+    2019: { winterTail: ["nino", 0.88], spring: ["nino", 0.75], summer: ["neutral", 0.35], fall: ["neutral", 0.40], winterOnset: ["nino", 0.66] },
+    2020: { winterTail: ["nino", 0.64], spring: ["neutral", 0.28], summer: ["neutral", -0.37], fall: ["nina", -1.06], winterOnset: ["nina", -1.08] },
+    2021: { winterTail: ["nina", -0.85], spring: ["nina", -0.55], summer: ["neutral", -0.37], fall: ["nina", -0.77], winterOnset: ["nina", -0.87] },
+    2022: { winterTail: ["nina", -0.80], spring: ["nina", -0.90], summer: ["nina", -0.80], fall: ["nina", -0.92], winterOnset: ["nina", -0.71] },
+    2023: { winterTail: ["nina", -0.42], spring: ["neutral", 0.27], summer: ["nino", 1.11], fall: ["nino", 1.81], winterOnset: ["nino", 2.06] },
+    2024: { winterTail: ["nino", 1.77], spring: ["nino", 0.86], summer: ["neutral", 0.08], fall: ["neutral", -0.23], winterOnset: ["neutral", -0.42] },
+    2025: { winterTail: ["neutral", -0.34], spring: ["neutral", -0.02], summer: ["neutral", -0.15], fall: ["neutral", -0.49], winterOnset: ["neutral", -0.54] },
+    2026: { winterTail: ["neutral", -0.26], spring: ["neutral", 0.54], summer: null, fall: null, winterOnset: null },
+  };
+
+  const ENSO_PHASE_LABELS = { nino: "El Niño", nina: "La Niña", neutral: "Neutral", pending: "Not yet known" };
+  const ENSO_PHASE_VARS = { nino: "--series-orange", nina: "--series-aqua", neutral: "--series-normal", pending: "--gridline" };
 
   function ensoColor(phase) {
     return seriesColor(ENSO_PHASE_VARS[phase]);
+  }
+
+  function seasonEntry(year, seasonKey) {
+    return SEASON_PHASE_BY_YEAR[year] && SEASON_PHASE_BY_YEAR[year][seasonKey];
+  }
+
+  function seasonPhase(year, seasonKey) {
+    const entry = seasonEntry(year, seasonKey);
+    return entry ? entry[0] : "pending";
+  }
+
+  function ensoStrength(anom) {
+    const a = Math.abs(anom);
+    if (a >= 2.0) return "very strong";
+    if (a >= 1.5) return "strong";
+    if (a >= 1.0) return "moderate";
+    return "weak";
+  }
+
+  // Continuous fill-opacity by ONI magnitude: weak/neutral segments fade
+  // toward the background, strong/very-strong events visually pop — a
+  // second data channel (strength) carried without adding any new marks.
+  function ensoOpacity(phase, anom) {
+    if (phase === "pending") return 0;
+    if (phase === "neutral") return 0.35;
+    const a = Math.min(Math.abs(anom), 2.0); // clamp at the "very strong" threshold
+    return 0.35 + (a / 2.0) * 0.65;
   }
 
   function monthTickLabel(mmdd) {
@@ -825,7 +892,7 @@
   // Chart 7: Radial year-rings — small multiples, one polar glyph per year
   // ---------------------------------------------------------------------
   function drawRadialYears(normalsDaily, observed, years) {
-    const { dayIndex } = buildDayIndex(normalsDaily);
+    const { dayOrder, dayIndex } = buildDayIndex(normalsDaily);
     const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
     const cols = 7;
     const rows = Math.ceil(years.length / cols);
@@ -844,17 +911,33 @@
     const k = (maxR - baseR) / ceiling;
 
     drawLegend("legend-radial-years", [
-      { label: "El Niño", color: ensoColor("nino"), style: "swatch" },
-      { label: "La Niña", color: ensoColor("nina"), style: "swatch" },
-      { label: "Neutral", color: ensoColor("neutral"), style: "swatch" },
+      ...INTENSITY_BUCKETS.map((b) => ({ label: b.label, color: intensityColor(b.key), style: "swatch" })),
+      { label: "El Niño (season, darker = stronger)", color: ensoColor("nino"), style: "line" },
+      { label: "La Niña (season, darker = stronger)", color: ensoColor("nina"), style: "line" },
+      { label: "Neutral (season)", color: ensoColor("neutral"), style: "line" },
     ]);
 
-    const angle = (idx) => (idx / 366) * 2 * Math.PI;
-    const lineGen = d3
-      .lineRadial()
-      .angle((d) => angle(d.idx))
-      .radius((d) => baseR + k * Math.min(d.value, ceiling))
-      .curve(d3.curveLinearClosed);
+    // Precompute colors once — resolved via getComputedStyle, so doing this
+    // per-spoke across ~13k marks would be wasteful for what's only 9 values.
+    const bucketColorMap = new Map(INTENSITY_BUCKETS.map((b) => [b.key, intensityColor(b.key)]));
+    const ensoColorMap = new Map(["nino", "nina", "neutral", "pending"].map((p) => [p, ensoColor(p)]));
+
+    const ringOuter = baseR;
+    const ringInner = baseR - 4;
+    const SEASON_BOUND_IDX = [60, 152, 244, 335]; // Mar 1, Jun 1, Sep 1, Dec 1
+
+    const angle = (idx) => (idx / 366) * 2 * Math.PI; // idx 0 = 12 o'clock, clockwise
+    const polar = (idx, r) => {
+      const a = angle(idx);
+      return [r * Math.sin(a), -r * Math.cos(a)];
+    };
+    const arcGen = d3
+      .arc()
+      .innerRadius(ringInner)
+      .outerRadius(ringOuter)
+      .padAngle(0.025)
+      .startAngle((d) => angle(d.startIdx))
+      .endAngle((d) => angle(d.endIdx));
 
     years.forEach((year, i) => {
       const col = i % cols;
@@ -868,19 +951,17 @@
         if (idx !== undefined) byDay.set(idx, r.precip);
       });
       const pts = d3.range(366).map((idx) => ({ idx, value: byDay.get(idx) || 0 }));
+      const wetDays = pts.filter((p) => p.value > 0);
       const annualTotal = d3.sum(pts, (p) => p.value);
-      const phase = ensoPhase(year);
-      const color = ensoColor(phase);
 
       const g = plot.append("g").attr("transform", `translate(${cx},${cy})`);
-      g.append("circle").attr("r", baseR).attr("fill", "none").attr("class", "gridline").attr("stroke-dasharray", "2,2");
-      g.append("path")
-        .datum(pts)
-        .attr("d", lineGen)
-        .attr("fill", color)
-        .attr("fill-opacity", 0.22)
-        .attr("stroke", color)
-        .attr("stroke-width", 1.2)
+
+      // Center hover target for the annual summary — sits behind everything
+      // else (drawn first) and exactly fills the ring's interior, so it
+      // never competes for hover with the ring segments or spokes.
+      g.append("circle")
+        .attr("r", ringInner)
+        .attr("fill", "transparent")
         .on("mousemove", (event) =>
           showTooltip(
             tooltip,
@@ -888,13 +969,98 @@
             event,
             String(year),
             [
-              { label: "ENSO phase", color, value: ENSO_PHASE_LABELS[phase] },
-              { label: "Annual total", color, value: `${annualTotal.toFixed(1)}"` },
+              { label: "Annual total", color: seriesColor("--series-normal"), value: `${annualTotal.toFixed(1)}"` },
+              { label: "Wet days", color: seriesColor("--series-normal"), value: String(wetDays.length) },
             ],
             (v) => v
           )
         )
         .on("mouseleave", () => tooltip.style("opacity", 0));
+
+      // ENSO season-phase ring: most years render as one uniform-colored
+      // ring (all 5 segments share a phase); years where ENSO flipped
+      // mid-year show a visibly multi-colored ring. Opacity carries
+      // strength (weak -> very strong); "pending" segments (current year,
+      // not yet happened/published) render as an outline only, no fill.
+      g.selectAll(".enso-arc")
+        .data(SEASONS)
+        .join("path")
+        .attr("class", "enso-arc")
+        .attr("d", arcGen)
+        .attr("fill", (d) => {
+          const phase = seasonPhase(year, d.key);
+          return phase === "pending" ? "none" : ensoColorMap.get(phase);
+        })
+        .attr("fill-opacity", (d) => {
+          const phase = seasonPhase(year, d.key);
+          const entry = seasonEntry(year, d.key);
+          return ensoOpacity(phase, entry ? entry[1] : 0);
+        })
+        .attr("stroke", (d) => (seasonPhase(year, d.key) === "pending" ? ensoColorMap.get("pending") : "none"))
+        .attr("stroke-width", 0.75)
+        .attr("stroke-dasharray", (d) => (seasonPhase(year, d.key) === "pending" ? "1.5,1.5" : null))
+        .on("mousemove", (event, d) => {
+          const phase = seasonPhase(year, d.key);
+          const entry = seasonEntry(year, d.key);
+          const rows =
+            phase === "pending"
+              ? [{ label: "ENSO phase", color: ensoColorMap.get(phase), value: ENSO_PHASE_LABELS[phase] }]
+              : [
+                  {
+                    label: "ENSO phase",
+                    color: ensoColorMap.get(phase),
+                    value: phase === "neutral" ? ENSO_PHASE_LABELS[phase] : `${ENSO_PHASE_LABELS[phase]} (${ensoStrength(entry[1])})`,
+                  },
+                  { label: "ONI", color: ensoColorMap.get(phase), value: `${entry[1] >= 0 ? "+" : ""}${entry[1].toFixed(2)}` },
+                ];
+          showTooltip(tooltip, container, event, `${year} — ${d.label}`, rows, (v) => v);
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0));
+
+      // Season divider lines — fixed visual reference for "where in the
+      // year," independent of any data.
+      g.selectAll(".season-divider")
+        .data(SEASON_BOUND_IDX)
+        .join("line")
+        .attr("class", "gridline season-divider")
+        .attr("x1", (idx) => polar(idx, ringInner)[0])
+        .attr("y1", (idx) => polar(idx, ringInner)[1])
+        .attr("x2", (idx) => polar(idx, maxR)[0])
+        .attr("y2", (idx) => polar(idx, maxR)[1])
+        .attr("stroke-width", 0.6)
+        .attr("pointer-events", "none");
+
+      // One spoke per rainy day — length and color both encode that day's
+      // rainfall (color via the same intensity scale as the calendar
+      // heatmap). Dry/missing days get no mark at all.
+      g.selectAll(".spoke")
+        .data(wetDays)
+        .join("line")
+        .attr("class", "spoke")
+        .attr("x1", (d) => polar(d.idx, ringOuter)[0])
+        .attr("y1", (d) => polar(d.idx, ringOuter)[1])
+        .attr("x2", (d) => polar(d.idx, ringOuter + k * Math.min(d.value, ceiling))[0])
+        .attr("y2", (d) => polar(d.idx, ringOuter + k * Math.min(d.value, ceiling))[1])
+        .attr("stroke", (d) => bucketColorMap.get(intensityBucket(d.value).key))
+        .attr("stroke-width", 1)
+        .attr("stroke-linecap", "butt")
+        .on("mousemove", (event, d) => {
+          const bucket = intensityBucket(d.value);
+          const dateLabel = fmtDate(parseISODate(`${year}-${dayOrder[d.idx]}`));
+          showTooltip(
+            tooltip,
+            container,
+            event,
+            dateLabel,
+            [
+              { label: "Precip", color: bucketColorMap.get(bucket.key), value: `${d.value.toFixed(2)}"` },
+              { label: "Intensity", color: bucketColorMap.get(bucket.key), value: bucket.label },
+            ],
+            (v) => v
+          );
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0));
+
       g.append("text").attr("class", "chart-label").attr("text-anchor", "middle").attr("y", maxR + 14).text(year);
     });
   }
