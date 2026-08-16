@@ -1,8 +1,14 @@
 """Fetch observed daily weather data for each configured station.
 
 On first run, backfills from BACKFILL_START_YEAR through today. On later
-runs, only fetches days after the most recent recorded observation and
-merges them into the existing file, so re-running is cheap and idempotent.
+runs, only re-fetches a trailing window of recent days plus anything new,
+and merges the result into the existing file.
+
+The trailing re-fetch matters because ACIS often returns a day's data as
+missing ("M") if queried before that day's observation has been finalized
+(commonly the case for "today", occasionally for the last couple of days).
+Re-fetching a small window each run heals those placeholder nulls once the
+real values become available, instead of leaving them stuck forever.
 """
 import datetime as dt
 import json
@@ -10,6 +16,7 @@ import json
 from common import acis_request, load_stations, station_data_dir, to_number, write_json
 
 BACKFILL_START_YEAR = 1991  # matches the 1991-2020 normals base period
+REFETCH_WINDOW_DAYS = 5  # re-check this many trailing days for late-finalized data
 
 
 def fetch_observed(sid, sdate, edate):
@@ -48,14 +55,10 @@ def main():
         existing = json.loads(obs_path.read_text()) if obs_path.exists() else []
 
         if existing:
-            last_date = max(r["date"] for r in existing)
-            sdate = (dt.date.fromisoformat(last_date) + dt.timedelta(days=1)).isoformat()
+            last_date = dt.date.fromisoformat(max(r["date"] for r in existing))
+            sdate = (last_date - dt.timedelta(days=REFETCH_WINDOW_DAYS)).isoformat()
         else:
             sdate = f"{BACKFILL_START_YEAR}-01-01"
-
-        if sdate > today:
-            print(f"[{station['id']}] already up to date through {existing[-1]['date']}")
-            continue
 
         print(f"[{station['id']}] fetching observed data {sdate}..{today}")
         new_records = fetch_observed(station["sid"], sdate, today)
