@@ -27,3 +27,11 @@ All notable changes to this project are documented in this file.
 - **5-year average series**: added a third line to the "Rainfall to date" chart — the average of
   the 5 most recent complete calendar years, aligned by day-of-year — so this year can be compared
   against both the 30-year normal and recent history in one view.
+- **"Precipitation Extremes" page**: a new `docs/extremes.html`, linked from the header nav, with
+  eight chart views of the same 35-year daily precipitation record, each aimed at the same
+  question — are events getting fewer/bigger or more/smaller over time — from a different angle:
+  a horizon chart, a calendar heatmap, a storm-count dot chart (normal vs. recent vs. this year),
+  a monthly precipitation-range candlestick, a storm-event candlestick timeline, a streamgraph by
+  rainfall intensity, small-multiple radial year-rings, and a size-proportional rain-bubble strip.
+  Shared chart primitives (`buildSvg`, tooltips, day-of-year alignment, etc.) were factored out of
+  `app.js` into `docs/chart-utils.js` so both pages use one copy.

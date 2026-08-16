@@ -14,6 +14,10 @@
       How this year's temperature and precipitation compare to the
       1991&ndash;2020 NOAA climate normals and recent years.
     </p>
+    <nav class="page-nav">
+      <a href="index.html" data-nav-target="index.html" class="active">Normals</a>
+      <a href="extremes.html" data-nav-target="extremes.html">Extremes</a>
+    </nav>
     <div class="station-picker">
       <label for="station-select">Station</label>
       <select id="station-select"></select>
@@ -68,6 +72,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="chart-utils.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Precipitation Extremes — Weather Normals Tracker</title>
+<meta name="description" content="Is precipitation getting more extreme over the 35-year record — fewer, bigger storms, or more frequent small ones?" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Precipitation Extremes</h1>
+    <p class="subtitle">
+      Is rain arriving in fewer, bigger events or more frequent small ones?
+      Eight views of the same 35 years of daily precipitation, each looking
+      for the same signal from a different angle.
+    </p>
+    <nav class="page-nav">
+      <a href="index.html" data-nav-target="index.html">Normals</a>
+      <a href="extremes.html" data-nav-target="extremes.html" class="active">Extremes</a>
+    </nav>
+    <div class="station-picker">
+      <label for="station-select">Station</label>
+      <select id="station-select"></select>
+      <span id="last-updated"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Horizon chart</h2>
+      <p class="card-note">
+        One folded-color band per year (oldest at top, this year at bottom).
+        Darker cells are wetter days — scan down the stack for the recent
+        rows looking "hotter" than the older ones.
+      </p>
+      <div id="legend-horizon" class="legend"></div>
+      <div id="chart-horizon" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Calendar heatmap</h2>
+      <p class="card-note">Every day since 1991, colored by rainfall intensity — years as rows, day-of-year as columns.</p>
+      <div id="legend-calendar-heatmap" class="legend"></div>
+      <div id="chart-calendar-heatmap" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Storm counts by size</h2>
+      <p class="card-note">
+        Each dot is one storm (a run of consecutive wet days), stacked by
+        size — normal-period average vs. recent average vs. this year, so
+        you can compare event counts directly instead of reading a smoothed
+        histogram.
+      </p>
+      <div id="legend-storm-dots" class="legend"></div>
+      <div id="chart-storm-dots" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly precipitation range</h2>
+      <p class="card-note">
+        Candle body = the historical 10th&ndash;90th percentile range for that
+        month (1991&ndash;present); whiskers = the all-time min/max. The marker
+        is this year's total — red if it busts outside the normal range.
+      </p>
+      <div id="legend-candle-monthly" class="legend"></div>
+      <div id="chart-candle-monthly" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Storm events over time</h2>
+      <p class="card-note">
+        One candle per storm of at least 1&Prime; total rainfall, across the
+        full record. Bar height = total rainfall; the notch marks the single
+        wettest day within the storm.
+      </p>
+      <div id="legend-candle-storms" class="legend"></div>
+      <div id="chart-candle-storms" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Rainfall by intensity, year over year</h2>
+      <p class="card-note">
+        Each year's total rainfall split by how it fell — trace, light,
+        moderate, heavy, extreme days. Watch whether the "heavy"/"extreme"
+        band is thickening at the expense of "light."
+      </p>
+      <div id="legend-streamgraph" class="legend"></div>
+      <div id="chart-streamgraph" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Year rings</h2>
+      <p class="card-note">
+        A compact radial calendar per year (angle = day of year, spikes =
+        rainfall). Rougher, spikier rings mean a more extreme year.
+      </p>
+      <div id="legend-radial-years" class="legend"></div>
+      <div id="chart-radial-years" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Rain bubble strip</h2>
+      <p class="card-note">
+        One row per year; a bubble marks every wet day, sized by that day's
+        rainfall. A row of many small bubbles tells a different story than a
+        row with a few huge ones.
+      </p>
+      <div id="legend-bubble-strip" class="legend"></div>
+      <div id="chart-bubble-strip" class="chart"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Data via the <a href="https://www.rcc-acis.org/" target="_blank" rel="noopener">ACIS Web Services API</a>,
+      the same source behind the NWS's NOWData tool. "Storm" events are runs of
+      consecutive days with measurable precipitation; a single missing day
+      inside a run is bridged, two or more ends it.
+      Updated automatically every day via GitHub Actions &mdash;
+      <a href="https://github.com/ePetrack/weather-normals" target="_blank" rel="noopener">source on GitHub</a>.
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="chart-utils.js"></script>
+  <script src="extremes.js"></script>
+</body>
+</html>

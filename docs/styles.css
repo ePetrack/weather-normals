@@ -14,6 +14,15 @@
   --series-orange: #eb6834;
   --series-aqua: #1baf7a;
   --series-red: #e34948;
+
+  /* Sequential precip-intensity ramp (trace -> extreme), distinct from the
+     categorical --series-* colors used for year/period comparisons. */
+  --intensity-trace: #eef2f5;
+  --intensity-light: #a9c9e8;
+  --intensity-moderate: #5f96d6;
+  --intensity-heavy: #2a5fa8;
+  --intensity-extreme: #12234f;
+  --intensity-none: var(--gridline);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +41,13 @@
     --series-orange: #d95926;
     --series-aqua: #199e70;
     --series-red: #e66767;
+
+    --intensity-trace: #26313a;
+    --intensity-light: #3a5f85;
+    --intensity-moderate: #4f86c2;
+    --intensity-heavy: #7fb2ea;
+    --intensity-extreme: #cfe3fa;
+    --intensity-none: var(--gridline);
   }
 }
 
@@ -50,6 +66,13 @@
   --series-orange: #d95926;
   --series-aqua: #199e70;
   --series-red: #e66767;
+
+  --intensity-trace: #26313a;
+  --intensity-light: #3a5f85;
+  --intensity-moderate: #4f86c2;
+  --intensity-heavy: #7fb2ea;
+  --intensity-extreme: #cfe3fa;
+  --intensity-none: var(--gridline);
 }
 
 * {
@@ -79,6 +102,27 @@ h1 {
   color: var(--text-secondary);
   margin: 0 0 20px;
   max-width: 640px;
+}
+
+.page-nav {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.page-nav a {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border: 1px solid var(--border);
+}
+
+.page-nav a.active {
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border-color: var(--text-primary);
 }
 
 .station-picker {
@@ -226,6 +270,16 @@ main {
 .baseline {
   stroke: var(--baseline);
   stroke-width: 1;
+}
+
+.chart-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.chart-label-strong {
+  fill: var(--text-secondary);
+  font-size: 11px;
 }
 
 .state-message {
