@@ -55,13 +55,20 @@
   function drawLegend(containerId, items) {
     const el = document.getElementById(containerId);
     el.innerHTML = items
-      .map(
-        (it) => `
+      .map((it) => {
+        const isHatch = it.style === "hatch-a" || it.style === "hatch-b";
+        // Hatch swatches layer a CSS background-image over this color, so they
+        // need background-color specifically — the "background" shorthand
+        // would reset that image back to none.
+        const style = isHatch
+          ? `background-color:${it.color};border-top-color:${it.color}`
+          : `background:${it.style === "dashed" ? "none" : it.color};border-top-color:${it.color}`;
+        return `
       <span class="legend-item">
-        <span class="legend-swatch ${it.style || ""}" style="background:${it.style === "dashed" ? "none" : it.color};border-top-color:${it.color}"></span>
+        <span class="legend-swatch ${it.style || ""}" style="${style}"></span>
         ${it.label}
-      </span>`
-      )
+      </span>`;
+      })
       .join("");
   }
 

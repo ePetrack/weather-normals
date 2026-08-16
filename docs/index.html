@@ -34,10 +34,14 @@
     </section>
 
     <section class="card">
-      <h2>Cumulative precipitation</h2>
-      <p class="card-note">Running year-to-date precipitation vs. the normal and recent years.</p>
-      <div id="legend-precip" class="legend"></div>
-      <div id="chart-cum-precip" class="chart"></div>
+      <h2>Rain &amp; snow by month</h2>
+      <p class="card-note">Monthly precipitation split into rain and snow (water equivalent), grouped by year — choose which years to compare.</p>
+      <div class="year-select">
+        <span class="year-select-label">Years:</span>
+        <div class="year-chips" id="precip-year-select"></div>
+      </div>
+      <div id="legend-precip-by-month" class="legend"></div>
+      <div id="chart-precip-by-month" class="chart"></div>
     </section>
 
     <section class="card">

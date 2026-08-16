@@ -46,7 +46,7 @@
     const base = `data/${stationId}`;
     const chartIds = [
       "chart-rainfall-burnup",
-      "chart-cum-precip",
+      "chart-precip-by-month",
       "chart-temp-band",
       "chart-monthly-temp",
       "chart-monthly-precip",
@@ -65,6 +65,7 @@
         "scheduled (or manually triggered) data-update run completes."));
       document.getElementById("last-updated").textContent = "";
       document.getElementById("rainfall-burnup-note").textContent = "";
+      document.getElementById("precip-year-select").innerHTML = "";
       console.error(err);
       return;
     }
@@ -75,7 +76,7 @@
       : "";
 
     drawRainfallBurnup(normalsDaily, observed);
-    drawCumulativePrecip(normalsDaily, observed);
+    drawPrecipByMonth(normalsMonthly, observed);
     drawTempBand(normalsDaily, observed);
     drawMonthlyTemp(normalsMonthly, observed);
     drawMonthlyPrecip(normalsMonthly, observed);
@@ -133,123 +134,214 @@
   }
 
   // ---------------------------------------------------------------------
-  // Chart 1: Cumulative precipitation — normal + this year + prior years
+  // Chart 1: Precipitation by month — bars grouped by month, sub-grouped by
+  // a user-selectable set of years (plus an always-shown normal reference),
+  // each bar split into rain vs. snow water-equivalent.
   // ---------------------------------------------------------------------
-  function drawCumulativePrecip(normalsDaily, observed) {
-    const { dayOrder, dayIndex } = buildDayIndex(normalsDaily);
-    const normalCum = cumulativeNormalPrecip(normalsDaily);
+  const SNOW_LIQUID_RATIO = 0.1; // standard 10:1 snowfall-to-water-equivalent rule of thumb
 
+  function monthlyPrecipByType(observed, year) {
+    const buckets = Array.from({ length: 12 }, () => ({ precip: 0, snow: 0, hasData: false }));
+    for (const r of observed) {
+      if (!r.date.startsWith(String(year))) continue;
+      const m = Number(r.date.slice(5, 7)) - 1;
+      const b = buckets[m];
+      b.hasData = true;
+      if (r.precip != null) b.precip += r.precip;
+      if (r.snow != null) b.snow += r.snow;
+    }
+    return buckets.map((b, i) => {
+      if (!b.hasData) return { month: i + 1, rain: null, snow: null, total: null };
+      const snowSwe = Math.min(b.snow * SNOW_LIQUID_RATIO, b.precip);
+      return { month: i + 1, rain: b.precip - snowSwe, snow: snowSwe, total: b.precip };
+    });
+  }
+
+  function addHatchPattern(defs, id, angle) {
+    const pattern = defs
+      .append("pattern")
+      .attr("id", id)
+      .attr("width", 6)
+      .attr("height", 6)
+      .attr("patternUnits", "userSpaceOnUse")
+      .attr("patternTransform", `rotate(${angle})`);
+    pattern.append("line").attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", 6).attr("stroke", "rgba(0,0,0,0.22)").attr("stroke-width", 2);
+  }
+
+  // Persists the user's year selection across re-renders (chip clicks,
+  // station switches) instead of resetting it on every redraw.
+  let precipMonthYearSelection = null;
+
+  function renderYearChips(years, selected, onToggle) {
+    const el = document.getElementById("precip-year-select");
+    el.innerHTML = "";
+    years.forEach((year) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "year-chip";
+      btn.textContent = String(year);
+      btn.setAttribute("aria-pressed", String(selected.has(year)));
+      btn.addEventListener("click", () => {
+        if (selected.has(year)) {
+          if (selected.size === 1) return; // keep at least one year selected
+          selected.delete(year);
+        } else {
+          selected.add(year);
+        }
+        btn.setAttribute("aria-pressed", String(selected.has(year)));
+        onToggle();
+      });
+      el.appendChild(btn);
+    });
+  }
+
+  function drawPrecipByMonth(normalsMonthly, observed) {
     const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: RECENT_YEAR_COUNT }, (_, i) => currentYear - i).filter(
-      (y) => byYear.has(String(y))
-    );
+    const availableYears = Array.from(byYear.keys(), Number).sort((a, b) => a - b);
 
-    const palette = [seriesColor("--series-blue"), seriesColor("--series-orange"), seriesColor("--series-aqua")];
-    const yearSeries = years.map((year, i) => ({
-      year,
-      color: palette[i],
-      points: cumulativeYearPrecip(observed, year, dayIndex),
-    }));
+    if (!availableYears.length) {
+      showMessage("chart-precip-by-month", "No observations recorded yet.");
+      document.getElementById("precip-year-select").innerHTML = "";
+      return;
+    }
 
-    drawLegend("legend-precip", [
-      { label: "1991–2020 normal", color: seriesColor("--series-normal"), style: "dashed" },
-      ...yearSeries.map((s) => ({ label: String(s.year), color: s.color, style: "line" })),
+    if (!precipMonthYearSelection || ![...precipMonthYearSelection].some((y) => availableYears.includes(y))) {
+      precipMonthYearSelection = new Set(availableYears.slice(-5));
+    }
+    const selected = precipMonthYearSelection;
+
+    const normalByMonth = new Map(normalsMonthly.map((n) => [n.month, n.precip_normal_total]));
+    const rainColor = seriesColor("--series-blue");
+    const snowColor = seriesColor("--series-aqua");
+    const normalColor = seriesColor("--series-normal");
+
+    drawLegend("legend-precip-by-month", [
+      { label: "1991–2020 normal", color: normalColor, style: "dashed" },
+      { label: "Rain", color: rainColor, style: "hatch-a" },
+      { label: "Snow (water equiv.)", color: snowColor, style: "hatch-b" },
     ]);
 
-    const margin = { top: 10, right: 16, bottom: 26, left: 46 };
-    const { plot, innerWidth, innerHeight, tooltip, container } = buildSvg("chart-cum-precip", { margin });
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
 
-    const x = d3.scaleLinear().domain([0, 365]).range([0, innerWidth]);
-    const maxY = Math.max(
-      d3.max(normalCum) || 0,
-      d3.max(yearSeries, (s) => d3.max(s.points, (p) => p.value)) || 0
-    );
-    const y = d3.scaleLinear().domain([0, maxY * 1.08]).nice().range([innerHeight, 0]);
+    function render() {
+      const years = Array.from(selected).sort((a, b) => a - b);
+      const perYear = new Map(years.map((year) => [year, monthlyPrecipByType(observed, year)]));
 
-    yAxisLeft(plot, y, innerWidth, { format: (d) => `${d}"` });
+      const margin = { top: 10, right: 16, bottom: 26, left: 46 };
+      const { plot, svg, innerWidth, innerHeight, tooltip, container } = buildSvg("chart-precip-by-month", { margin });
 
-    const ticks = monthTicks(dayIndex);
-    plot
-      .append("g")
-      .attr("class", "axis")
-      .attr("transform", `translate(0,${innerHeight})`)
-      .call(
-        d3
-          .axisBottom(x)
-          .tickValues(ticks.map((t) => t.idx))
-          .tickFormat((d, i) => ticks[i].name)
-      )
-      .call((g) => g.select(".domain").attr("class", "baseline"));
+      const categories = ["normal", ...years.map(String)];
+      const x0 = d3.scaleBand().domain(d3.range(1, 13)).range([0, innerWidth]).paddingInner(0.3).paddingOuter(0.08);
+      const x1 = d3.scaleBand().domain(categories).range([0, x0.bandwidth()]).padding(0.12);
 
-    const line = d3.line().x((d) => x(d.idx)).y((d) => y(d.value));
+      let maxY = 0;
+      for (let m = 1; m <= 12; m++) {
+        const normalVal = normalByMonth.get(m);
+        if (normalVal != null) maxY = Math.max(maxY, normalVal);
+        years.forEach((year) => {
+          const total = perYear.get(year)[m - 1].total;
+          if (total != null) maxY = Math.max(maxY, total);
+        });
+      }
+      const y = d3.scaleLinear().domain([0, (maxY || 1) * 1.15]).nice().range([innerHeight, 0]);
 
-    plot
-      .append("path")
-      .datum(normalCum.map((v, idx) => ({ idx, value: v })))
-      .attr("fill", "none")
-      .attr("stroke", seriesColor("--series-normal"))
-      .attr("stroke-width", 2)
-      .attr("stroke-dasharray", "5,4")
-      .attr("d", line);
-
-    yearSeries.forEach((s) => {
+      yAxisLeft(plot, y, innerWidth, { format: (d) => `${d}"`, ticks: 5 });
       plot
-        .append("path")
-        .datum(s.points)
-        .attr("fill", "none")
-        .attr("stroke", s.color)
-        .attr("stroke-width", 2)
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("d", line);
-    });
+        .append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(x0).tickFormat((m) => MONTH_ABBR[m - 1]))
+        .call((g) => g.select(".domain").attr("class", "baseline"));
 
-    // Crosshair + tooltip
-    const focusLine = plot
-      .append("line")
-      .attr("class", "gridline")
-      .attr("y1", 0)
-      .attr("y2", innerHeight)
-      .style("opacity", 0);
-    const focusDots = yearSeries.map((s) =>
-      plot
-        .append("circle")
-        .attr("r", 4)
-        .attr("fill", s.color)
-        .style("stroke", "var(--surface-1)")
-        .style("stroke-width", 2)
-        .style("opacity", 0)
-    );
+      const defs = svg.append("defs");
+      addHatchPattern(defs, "precip-month-hatch-rain", 45);
+      addHatchPattern(defs, "precip-month-hatch-snow", 135);
 
-    plot
-      .append("rect")
-      .attr("width", innerWidth)
-      .attr("height", innerHeight)
-      .attr("fill", "transparent")
-      .on("mousemove", (event) => {
-        const [mx] = d3.pointer(event);
-        const idx = Math.round(x.invert(mx));
-        const dayKey = dayOrder[Math.max(0, Math.min(365, idx))];
-        focusLine.attr("x1", x(idx)).attr("x2", x(idx)).style("opacity", 1);
+      const barWidth = Math.min(24, x1.bandwidth());
+      const GAP = 2; // surface gap between the stacked rain/snow segments
 
-        const rows = yearSeries.map((s, i) => {
-          const pt = s.points.reduce((best, p) => (p.idx <= idx ? p : best), null);
-          if (pt) focusDots[i].attr("cx", x(pt.idx)).attr("cy", y(pt.value)).style("opacity", 1);
-          else focusDots[i].style("opacity", 0);
-          return pt ? { label: String(s.year), color: s.color, value: pt.value } : null;
-        }).filter(Boolean);
+      for (let m = 1; m <= 12; m++) {
+        const groupX = x0(m);
 
-        const normalVal = normalCum[Math.max(0, Math.min(365, idx))];
-        rows.unshift({ label: "Normal", color: seriesColor("--series-normal"), value: normalVal });
+        const normalVal = normalByMonth.get(m);
+        if (normalVal != null) {
+          const bx = groupX + x1("normal") + (x1.bandwidth() - barWidth) / 2;
+          const h = innerHeight - y(normalVal);
+          plot
+            .append("path")
+            .attr("d", roundedTopRectPath(bx, innerHeight - h, barWidth, h, 4))
+            .attr("fill", normalColor)
+            .attr("fill-opacity", 0.12)
+            .attr("stroke", normalColor)
+            .attr("stroke-width", 1.5)
+            .attr("stroke-dasharray", "4,3");
+          plot
+            .append("rect")
+            .attr("x", groupX + x1("normal"))
+            .attr("y", 0)
+            .attr("width", x1.bandwidth())
+            .attr("height", innerHeight)
+            .attr("fill", "transparent")
+            .on("mousemove", (event) =>
+              showTooltip(
+                tooltip,
+                container,
+                event,
+                `${MONTH_ABBR[m - 1]} — 1991–2020 normal`,
+                [{ label: "Normal", color: normalColor, value: normalVal }],
+                (v) => `${v.toFixed(2)}"`
+              )
+            )
+            .on("mouseleave", () => tooltip.style("opacity", 0));
+        }
 
-        showTooltip(tooltip, container, event, `Through ${monthTickLabel(dayKey)}`, rows, (v) => `${v.toFixed(2)}"`);
-      })
-      .on("mouseleave", () => {
-        focusLine.style("opacity", 0);
-        focusDots.forEach((d) => d.style("opacity", 0));
-        tooltip.style("opacity", 0);
-      });
+        years.forEach((year) => {
+          const row = perYear.get(year)[m - 1];
+          if (row.total == null) return;
+          const bx = groupX + x1(String(year)) + (x1.bandwidth() - barWidth) / 2;
+          const hasSnow = row.snow > 0.005;
+          const isPartial = year === currentYear && m === currentMonth;
+          const opacity = isPartial ? 0.55 : 1;
+
+          const rainTopVal = hasSnow ? row.rain : row.total;
+          let rainH = innerHeight - y(rainTopVal);
+          if (hasSnow) rainH = Math.max(0, rainH - GAP / 2);
+          const rainPath = roundedTopRectPath(bx, innerHeight - rainH, barWidth, rainH, hasSnow ? 0 : 4);
+          plot.append("path").attr("d", rainPath).attr("fill", rainColor).attr("opacity", opacity);
+          plot.append("path").attr("d", rainPath).attr("fill", "url(#precip-month-hatch-rain)").attr("opacity", opacity);
+
+          if (hasSnow) {
+            const snowTop = y(row.total);
+            const snowH = Math.max(0, y(row.rain) - y(row.total) - GAP / 2);
+            const snowPath = roundedTopRectPath(bx, snowTop, barWidth, snowH, 4);
+            plot.append("path").attr("d", snowPath).attr("fill", snowColor).attr("opacity", opacity);
+            plot.append("path").attr("d", snowPath).attr("fill", "url(#precip-month-hatch-snow)").attr("opacity", opacity);
+          }
+
+          plot
+            .append("rect")
+            .attr("x", groupX + x1(String(year)))
+            .attr("y", 0)
+            .attr("width", x1.bandwidth())
+            .attr("height", innerHeight)
+            .attr("fill", "transparent")
+            .on("mousemove", (event) => {
+              const rows = [];
+              if (row.rain > 0.005) rows.push({ label: "Rain", color: rainColor, value: row.rain });
+              if (hasSnow) rows.push({ label: "Snow (water equiv.)", color: snowColor, value: row.snow });
+              rows.push({ label: "Total", color: seriesColor("--text-secondary"), value: row.total });
+              const title = `${MONTH_ABBR[m - 1]} ${year}${isPartial ? " (month to date)" : ""}`;
+              showTooltip(tooltip, container, event, title, rows, (v) => `${v.toFixed(2)}"`);
+            })
+            .on("mouseleave", () => tooltip.style("opacity", 0));
+        });
+      }
+    }
+
+    renderYearChips(availableYears, selected, render);
+    render();
   }
 
   function monthTickLabel(mmdd) {
