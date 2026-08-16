@@ -43,6 +43,7 @@
   async function loadStation(stationId) {
     const base = `data/${stationId}`;
     const chartIds = [
+      "chart-rainfall-burnup",
       "chart-cum-precip",
       "chart-temp-band",
       "chart-monthly-temp",
@@ -61,6 +62,7 @@
         "Data isn't published yet for this station — it appears after the first " +
         "scheduled (or manually triggered) data-update run completes."));
       document.getElementById("last-updated").textContent = "";
+      document.getElementById("rainfall-burnup-note").textContent = "";
       console.error(err);
       return;
     }
@@ -70,6 +72,7 @@
       ? `Data through ${fmtDate(parseISODate(lastObsDate))}`
       : "";
 
+    drawRainfallBurnup(normalsDaily, observed);
     drawCumulativePrecip(normalsDaily, observed);
     drawTempBand(normalsDaily, observed);
     drawMonthlyTemp(normalsMonthly, observed);
@@ -125,17 +128,52 @@
   }
 
   // ---------------------------------------------------------------------
-  // Chart 1: Cumulative precipitation — normal + this year + prior years
+  // Shared helpers for day-of-year cumulative precipitation, used by both
+  // the multi-year comparison chart and the rainfall-to-date burnup chart.
   // ---------------------------------------------------------------------
-  function drawCumulativePrecip(normalsDaily, observed) {
+  function buildDayIndex(normalsDaily) {
     const dayOrder = normalsDaily.map((d) => d.date); // 366 sorted "MM-DD"
     const dayIndex = new Map(dayOrder.map((d, i) => [d, i]));
+    return { dayOrder, dayIndex };
+  }
 
+  function cumulativeNormalPrecip(normalsDaily) {
     let cum = 0;
-    const normalCum = normalsDaily.map((d) => {
+    return normalsDaily.map((d) => {
       cum += d.precip_normal || 0;
       return cum;
     });
+  }
+
+  function cumulativeYearPrecip(observed, year, dayIndex) {
+    const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
+    const rows = byYear.get(String(year));
+    if (!rows) return [];
+    const sorted = rows.slice().sort((a, b) => d3.ascending(a.date, b.date));
+    let running = 0;
+    const points = [];
+    for (const r of sorted) {
+      const idx = dayIndex.get(r.date.slice(5));
+      if (idx === undefined) continue;
+      running += r.precip || 0;
+      points.push({ idx, value: running, date: r.date });
+    }
+    return points;
+  }
+
+  function monthTicks(dayIndex) {
+    return MONTH_ABBR.map((name, m) => {
+      const key = `${String(m + 1).padStart(2, "0")}-01`;
+      return { name, idx: dayIndex.get(key) };
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Chart 1: Cumulative precipitation — normal + this year + prior years
+  // ---------------------------------------------------------------------
+  function drawCumulativePrecip(normalsDaily, observed) {
+    const { dayOrder, dayIndex } = buildDayIndex(normalsDaily);
+    const normalCum = cumulativeNormalPrecip(normalsDaily);
 
     const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
     const currentYear = new Date().getFullYear();
@@ -144,19 +182,11 @@
     );
 
     const palette = [seriesColor("--series-blue"), seriesColor("--series-orange"), seriesColor("--series-aqua")];
-    const yearSeries = years.map((year, i) => {
-      const rows = byYear.get(String(year)).slice().sort((a, b) => d3.ascending(a.date, b.date));
-      let running = 0;
-      const points = [];
-      for (const r of rows) {
-        const key = r.date.slice(5);
-        const idx = dayIndex.get(key);
-        if (idx === undefined) continue;
-        running += r.precip || 0;
-        points.push({ idx, value: running, date: r.date });
-      }
-      return { year, color: palette[i], points };
-    });
+    const yearSeries = years.map((year, i) => ({
+      year,
+      color: palette[i],
+      points: cumulativeYearPrecip(observed, year, dayIndex),
+    }));
 
     drawLegend("legend-precip", [
       { label: "1991–2020 normal", color: seriesColor("--series-normal"), style: "dashed" },
@@ -175,10 +205,7 @@
 
     yAxisLeft(plot, y, innerWidth, { format: (d) => `${d}"` });
 
-    const monthTicks = MONTH_ABBR.map((name, m) => {
-      const key = `${String(m + 1).padStart(2, "0")}-01`;
-      return { name, idx: dayIndex.get(key) };
-    });
+    const ticks = monthTicks(dayIndex);
     plot
       .append("g")
       .attr("class", "axis")
@@ -186,8 +213,8 @@
       .call(
         d3
           .axisBottom(x)
-          .tickValues(monthTicks.map((t) => t.idx))
-          .tickFormat((d, i) => monthTicks[i].name)
+          .tickValues(ticks.map((t) => t.idx))
+          .tickFormat((d, i) => ticks[i].name)
       )
       .call((g) => g.select(".domain").attr("class", "baseline"));
 
@@ -264,6 +291,190 @@
   function monthTickLabel(mmdd) {
     const [m, d] = mmdd.split("-").map(Number);
     return `${MONTH_ABBR[m - 1]} ${d}`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Chart 0: Rainfall to date — burnup-style normal vs. actual
+  //
+  // Burnup-chart shape: a filled "completed" area (this year's actual
+  // cumulative rainfall) climbing toward a dashed "target trajectory"
+  // (normal-to-date) and a flat "total scope" reference line (the full
+  // year's normal total). The gap between the fill's top edge and the
+  // dashed line *is* the surplus/deficit — reinforced with a plain-text
+  // summary and a tooltip delta rather than a second overlapping fill, to
+  // keep the chart itself readable.
+  // ---------------------------------------------------------------------
+  function drawRainfallBurnup(normalsDaily, observed) {
+    const { dayOrder, dayIndex } = buildDayIndex(normalsDaily);
+    const normalCum = cumulativeNormalPrecip(normalsDaily);
+    const currentYear = new Date().getFullYear();
+    const actualPoints = cumulativeYearPrecip(observed, currentYear, dayIndex);
+    const noteEl = document.getElementById("rainfall-burnup-note");
+
+    drawLegend("legend-rainfall-burnup", [
+      { label: "1991–2020 normal", color: seriesColor("--series-normal"), style: "dashed" },
+      { label: "This year (measured)", color: seriesColor("--series-blue"), style: "line" },
+    ]);
+
+    if (!actualPoints.length) {
+      showMessage("chart-rainfall-burnup", "No observations recorded yet this year.");
+      if (noteEl) noteEl.textContent = "";
+      return;
+    }
+
+    const todayIdx = actualPoints[actualPoints.length - 1].idx;
+    const todayActual = actualPoints[actualPoints.length - 1].value;
+    const todayNormal = normalCum[todayIdx];
+    const delta = todayActual - todayNormal;
+    const annualNormalTotal = normalCum[normalCum.length - 1];
+
+    if (noteEl) {
+      const direction = delta >= 0 ? "above" : "below";
+      noteEl.textContent =
+        `This year has recorded ${todayActual.toFixed(2)}" through ${monthTickLabel(dayOrder[todayIdx])} — ` +
+        `${Math.abs(delta).toFixed(2)}" ${direction} the 1991–2020 normal pace of ${todayNormal.toFixed(2)}".`;
+    }
+
+    // Forward-fill the actual series across every day index through today,
+    // so the area/line have no gaps on days without a fresh observation.
+    const actualByIdx = new Map(actualPoints.map((p) => [p.idx, p.value]));
+    const aligned = [];
+    let last = 0;
+    for (let i = 0; i <= todayIdx; i++) {
+      if (actualByIdx.has(i)) last = actualByIdx.get(i);
+      aligned.push({ idx: i, value: last });
+    }
+
+    const margin = { top: 10, right: 92, bottom: 26, left: 46 };
+    const { plot, innerWidth, innerHeight, tooltip, container } = buildSvg("chart-rainfall-burnup", { margin });
+
+    const x = d3.scaleLinear().domain([0, 365]).range([0, innerWidth]);
+    const maxY = Math.max(annualNormalTotal, todayActual) * 1.12;
+    const y = d3.scaleLinear().domain([0, maxY]).nice().range([innerHeight, 0]);
+
+    yAxisLeft(plot, y, innerWidth, { format: (d) => `${d}"` });
+
+    const ticks = monthTicks(dayIndex);
+    plot
+      .append("g")
+      .attr("class", "axis")
+      .attr("transform", `translate(0,${innerHeight})`)
+      .call(
+        d3
+          .axisBottom(x)
+          .tickValues(ticks.map((t) => t.idx))
+          .tickFormat((d, i) => ticks[i].name)
+      )
+      .call((g) => g.select(".domain").attr("class", "baseline"));
+
+    // Annual normal total — the burnup chart's flat "total scope" line.
+    plot
+      .append("line")
+      .attr("x1", 0)
+      .attr("x2", innerWidth)
+      .attr("y1", y(annualNormalTotal))
+      .attr("y2", y(annualNormalTotal))
+      .attr("stroke", seriesColor("--series-normal"))
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "2,3")
+      .attr("opacity", 0.6);
+    plot
+      .append("text")
+      .attr("class", "axis")
+      .attr("x", innerWidth + 6)
+      .attr("y", y(annualNormalTotal))
+      .attr("dy", "0.32em")
+      .text(`Annual normal ${annualNormalTotal.toFixed(1)}"`);
+
+    // Progress area: this year, 0 -> actual (the burnup's "completed" fill).
+    const area = d3.area().x((d) => x(d.idx)).y0(innerHeight).y1((d) => y(d.value));
+    plot.append("path").datum(aligned).attr("fill", seriesColor("--series-blue")).attr("opacity", 0.12).attr("d", area);
+
+    // Normal-to-date dashed reference curve (the "target trajectory").
+    const line = d3.line().x((d) => x(d.idx)).y((d) => y(d.value));
+    plot
+      .append("path")
+      .datum(normalCum.map((v, idx) => ({ idx, value: v })))
+      .attr("fill", "none")
+      .attr("stroke", seriesColor("--series-normal"))
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "5,4")
+      .attr("d", line);
+
+    // This year, solid, on top.
+    plot
+      .append("path")
+      .datum(aligned)
+      .attr("fill", "none")
+      .attr("stroke", seriesColor("--series-blue"))
+      .attr("stroke-width", 2)
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("d", line);
+
+    // Today marker.
+    plot
+      .append("line")
+      .attr("class", "gridline")
+      .attr("x1", x(todayIdx))
+      .attr("x2", x(todayIdx))
+      .attr("y1", 0)
+      .attr("y2", innerHeight);
+    plot
+      .append("circle")
+      .attr("cx", x(todayIdx))
+      .attr("cy", y(todayActual))
+      .attr("r", 4)
+      .attr("fill", seriesColor("--series-blue"))
+      .style("stroke", "var(--surface-1)")
+      .style("stroke-width", 2);
+    plot
+      .append("circle")
+      .attr("cx", x(todayIdx))
+      .attr("cy", y(todayNormal))
+      .attr("r", 4)
+      .attr("fill", seriesColor("--series-normal"))
+      .style("stroke", "var(--surface-1)")
+      .style("stroke-width", 2);
+
+    // Crosshair + tooltip
+    const focusLine = plot.append("line").attr("class", "gridline").attr("y1", 0).attr("y2", innerHeight).style("opacity", 0);
+    const focusDotActual = plot.append("circle").attr("r", 4).attr("fill", seriesColor("--series-blue")).style("stroke", "var(--surface-1)").style("stroke-width", 2).style("opacity", 0);
+    const focusDotNormal = plot.append("circle").attr("r", 4).attr("fill", seriesColor("--series-normal")).style("stroke", "var(--surface-1)").style("stroke-width", 2).style("opacity", 0);
+
+    plot
+      .append("rect")
+      .attr("width", innerWidth)
+      .attr("height", innerHeight)
+      .attr("fill", "transparent")
+      .on("mousemove", (event) => {
+        const [mx] = d3.pointer(event);
+        const idx = Math.max(0, Math.min(todayIdx, Math.round(x.invert(mx))));
+        focusLine.attr("x1", x(idx)).attr("x2", x(idx)).style("opacity", 1);
+
+        const actualVal = aligned[idx].value;
+        const normalVal = normalCum[idx];
+        focusDotActual.attr("cx", x(idx)).attr("cy", y(actualVal)).style("opacity", 1);
+        focusDotNormal.attr("cx", x(idx)).attr("cy", y(normalVal)).style("opacity", 1);
+
+        const diff = actualVal - normalVal;
+        const rows = [
+          { label: "This year", color: seriesColor("--series-blue"), value: actualVal },
+          { label: "Normal", color: seriesColor("--series-normal"), value: normalVal },
+          {
+            label: diff >= 0 ? "Above normal" : "Below normal",
+            color: seriesColor(diff >= 0 ? "--series-blue" : "--series-red"),
+            value: Math.abs(diff),
+          },
+        ];
+        showTooltip(tooltip, container, event, `Through ${monthTickLabel(dayOrder[idx])}`, rows, (v) => `${v.toFixed(2)}"`);
+      })
+      .on("mouseleave", () => {
+        focusLine.style("opacity", 0);
+        focusDotActual.style("opacity", 0);
+        focusDotNormal.style("opacity", 0);
+        tooltip.style("opacity", 0);
+      });
   }
 
   // ---------------------------------------------------------------------
