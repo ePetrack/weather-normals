@@ -28,18 +28,20 @@ def fetch_observed(sid, sdate, edate):
             {"name": "maxt", "interval": "dly"},
             {"name": "mint", "interval": "dly"},
             {"name": "pcpn", "interval": "dly"},
+            {"name": "snow", "interval": "dly"},
         ],
     }
     payload = acis_request(params)
     records = []
     for row in payload["data"]:
-        date, tmax, tmin, precip = row
+        date, tmax, tmin, precip, snow = row
         records.append(
             {
                 "date": date,
                 "tmax": to_number(tmax),
                 "tmin": to_number(tmin),
                 "precip": to_number(precip),
+                "snow": to_number(snow),
             }
         )
     return records
@@ -56,7 +58,14 @@ def main():
 
         if existing:
             last_date = dt.date.fromisoformat(max(r["date"] for r in existing))
-            sdate = (last_date - dt.timedelta(days=REFETCH_WINDOW_DAYS)).isoformat()
+            # A one-time full re-backfill so previously-fetched history picks up
+            # the "snow" element too, instead of leaving it missing forever.
+            needs_backfill = any("snow" not in r for r in existing)
+            sdate = (
+                f"{BACKFILL_START_YEAR}-01-01"
+                if needs_backfill
+                else (last_date - dt.timedelta(days=REFETCH_WINDOW_DAYS)).isoformat()
+            )
         else:
             sdate = f"{BACKFILL_START_YEAR}-01-01"
 
