@@ -10,6 +10,7 @@
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
   const RECENT_YEAR_COUNT = 3; // this year + up to 2 prior years
+  const AVG_YEAR_COUNT = 5; // trailing years averaged for the "recent history" baseline
   const TEMP_WINDOW_DAYS = 120;
 
   const seriesColor = (name) =>
@@ -159,6 +160,35 @@
       points.push({ idx, value: running, date: r.date });
     }
     return points;
+  }
+
+  // Years from `candidates` that actually have any observations.
+  function presentYears(observed, candidates) {
+    const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
+    return candidates.filter((y) => byYear.has(String(y)));
+  }
+
+  // Average cumulative precipitation across several years, aligned by day-of-year
+  // (forward-filled per year so a day with no fresh observation carries the prior
+  // running total). Returns a full 366-entry array, or [] if no years have data.
+  function cumulativeAverageYearsPrecip(observed, years, dayIndex) {
+    const perYear = years
+      .map((year) => cumulativeYearPrecip(observed, year, dayIndex))
+      .filter((points) => points.length);
+    if (!perYear.length) return [];
+
+    const aligned = perYear.map((points) => {
+      const byIdx = new Map(points.map((p) => [p.idx, p.value]));
+      const out = [];
+      let last = 0;
+      for (let i = 0; i < 366; i++) {
+        if (byIdx.has(i)) last = byIdx.get(i);
+        out.push(last);
+      }
+      return out;
+    });
+
+    return Array.from({ length: 366 }, (_, i) => d3.mean(aligned, (series) => series[i]));
   }
 
   function monthTicks(dayIndex) {
@@ -311,10 +341,21 @@
     const actualPoints = cumulativeYearPrecip(observed, currentYear, dayIndex);
     const noteEl = document.getElementById("rainfall-burnup-note");
 
-    drawLegend("legend-rainfall-burnup", [
+    const avgYears = presentYears(
+      observed,
+      Array.from({ length: AVG_YEAR_COUNT }, (_, i) => currentYear - 1 - i)
+    ).sort((a, b) => a - b);
+    const avgSeries = cumulativeAverageYearsPrecip(observed, avgYears, dayIndex);
+    const avgLabel = avgYears.length
+      ? `${avgYears.length}-yr avg (${avgYears[0]}–${avgYears[avgYears.length - 1]})`
+      : null;
+
+    const legendItems = [
       { label: "1991–2020 normal", color: seriesColor("--series-normal"), style: "dashed" },
-      { label: "This year (measured)", color: seriesColor("--series-blue"), style: "line" },
-    ]);
+    ];
+    if (avgLabel) legendItems.push({ label: avgLabel, color: seriesColor("--series-aqua"), style: "line" });
+    legendItems.push({ label: "This year (measured)", color: seriesColor("--series-blue"), style: "line" });
+    drawLegend("legend-rainfall-burnup", legendItems);
 
     if (!actualPoints.length) {
       showMessage("chart-rainfall-burnup", "No observations recorded yet this year.");
@@ -325,14 +366,22 @@
     const todayIdx = actualPoints[actualPoints.length - 1].idx;
     const todayActual = actualPoints[actualPoints.length - 1].value;
     const todayNormal = normalCum[todayIdx];
+    const todayAvg = avgSeries.length ? avgSeries[todayIdx] : null;
     const delta = todayActual - todayNormal;
+    const avgDelta = todayAvg != null ? todayActual - todayAvg : null;
     const annualNormalTotal = normalCum[normalCum.length - 1];
 
     if (noteEl) {
       const direction = delta >= 0 ? "above" : "below";
-      noteEl.textContent =
+      let text =
         `This year has recorded ${todayActual.toFixed(2)}" through ${monthTickLabel(dayOrder[todayIdx])} — ` +
-        `${Math.abs(delta).toFixed(2)}" ${direction} the 1991–2020 normal pace of ${todayNormal.toFixed(2)}".`;
+        `${Math.abs(delta).toFixed(2)}" ${direction} the 1991–2020 normal pace of ${todayNormal.toFixed(2)}"`;
+      if (avgDelta != null) {
+        const avgDirection = avgDelta >= 0 ? "above" : "below";
+        text +=
+          ` and ${Math.abs(avgDelta).toFixed(2)}" ${avgDirection} the ${avgYears[0]}–${avgYears[avgYears.length - 1]} average pace of ${todayAvg.toFixed(2)}"`;
+      }
+      noteEl.textContent = text + ".";
     }
 
     // Forward-fill the actual series across every day index through today,
@@ -349,7 +398,7 @@
     const { plot, innerWidth, innerHeight, tooltip, container } = buildSvg("chart-rainfall-burnup", { margin });
 
     const x = d3.scaleLinear().domain([0, 365]).range([0, innerWidth]);
-    const maxY = Math.max(annualNormalTotal, todayActual) * 1.12;
+    const maxY = Math.max(annualNormalTotal, todayActual, d3.max(avgSeries) || 0) * 1.12;
     const y = d3.scaleLinear().domain([0, maxY]).nice().range([innerHeight, 0]);
 
     yAxisLeft(plot, y, innerWidth, { format: (d) => `${d}"` });
@@ -401,6 +450,17 @@
       .attr("stroke-dasharray", "5,4")
       .attr("d", line);
 
+    // Recent-history average, solid, between the normal and this-year lines.
+    if (avgSeries.length) {
+      plot
+        .append("path")
+        .datum(avgSeries.map((v, idx) => ({ idx, value: v })))
+        .attr("fill", "none")
+        .attr("stroke", seriesColor("--series-aqua"))
+        .attr("stroke-width", 2)
+        .attr("d", line);
+    }
+
     // This year, solid, on top.
     plot
       .append("path")
@@ -436,11 +496,24 @@
       .attr("fill", seriesColor("--series-normal"))
       .style("stroke", "var(--surface-1)")
       .style("stroke-width", 2);
+    if (todayAvg != null) {
+      plot
+        .append("circle")
+        .attr("cx", x(todayIdx))
+        .attr("cy", y(todayAvg))
+        .attr("r", 4)
+        .attr("fill", seriesColor("--series-aqua"))
+        .style("stroke", "var(--surface-1)")
+        .style("stroke-width", 2);
+    }
 
     // Crosshair + tooltip
     const focusLine = plot.append("line").attr("class", "gridline").attr("y1", 0).attr("y2", innerHeight).style("opacity", 0);
     const focusDotActual = plot.append("circle").attr("r", 4).attr("fill", seriesColor("--series-blue")).style("stroke", "var(--surface-1)").style("stroke-width", 2).style("opacity", 0);
     const focusDotNormal = plot.append("circle").attr("r", 4).attr("fill", seriesColor("--series-normal")).style("stroke", "var(--surface-1)").style("stroke-width", 2).style("opacity", 0);
+    const focusDotAvg = avgSeries.length
+      ? plot.append("circle").attr("r", 4).attr("fill", seriesColor("--series-aqua")).style("stroke", "var(--surface-1)").style("stroke-width", 2).style("opacity", 0)
+      : null;
 
     plot
       .append("rect")
@@ -456,23 +529,26 @@
         const normalVal = normalCum[idx];
         focusDotActual.attr("cx", x(idx)).attr("cy", y(actualVal)).style("opacity", 1);
         focusDotNormal.attr("cx", x(idx)).attr("cy", y(normalVal)).style("opacity", 1);
+        if (focusDotAvg) focusDotAvg.attr("cx", x(idx)).attr("cy", y(avgSeries[idx])).style("opacity", 1);
 
         const diff = actualVal - normalVal;
         const rows = [
           { label: "This year", color: seriesColor("--series-blue"), value: actualVal },
           { label: "Normal", color: seriesColor("--series-normal"), value: normalVal },
-          {
-            label: diff >= 0 ? "Above normal" : "Below normal",
-            color: seriesColor(diff >= 0 ? "--series-blue" : "--series-red"),
-            value: Math.abs(diff),
-          },
         ];
+        if (avgSeries.length) rows.push({ label: avgLabel, color: seriesColor("--series-aqua"), value: avgSeries[idx] });
+        rows.push({
+          label: diff >= 0 ? "Above normal" : "Below normal",
+          color: seriesColor(diff >= 0 ? "--series-blue" : "--series-red"),
+          value: Math.abs(diff),
+        });
         showTooltip(tooltip, container, event, `Through ${monthTickLabel(dayOrder[idx])}`, rows, (v) => `${v.toFixed(2)}"`);
       })
       .on("mouseleave", () => {
         focusLine.style("opacity", 0);
         focusDotActual.style("opacity", 0);
         focusDotNormal.style("opacity", 0);
+        if (focusDotAvg) focusDotAvg.style("opacity", 0);
         tooltip.style("opacity", 0);
       });
   }
