@@ -50,6 +50,39 @@
     return seriesColor(`--intensity-${key}`);
   }
 
+  // ---------------------------------------------------------------------
+  // ENSO (El Niño Southern Oscillation) phase per calendar year, based on
+  // NOAA CPC's Oceanic Niño Index (ONI): El Niño = ONI >= +0.5 for 5+
+  // overlapping 3-month seasons, La Niña = ONI <= -0.5, otherwise neutral.
+  // Each calendar year gets a single label for whichever phase it's
+  // conventionally grouped with in NOAA's published ENSO-year lists — a
+  // simplification for years where the phase actually flipped mid-year
+  // (e.g. 1998, 2010, 2016 all start in one phase and end in another).
+  // 2024–2026 reflect the verified record as of August 2026: both the
+  // 2024-25 and 2025-26 winters came in neutral: 2026 itself is still
+  // in progress, with El Niño developing (not yet confirmed) in August.
+  // ---------------------------------------------------------------------
+  const ENSO_PHASE_BY_YEAR = {
+    1991: "nino", 1992: "neutral", 1993: "nino", 1994: "nino", 1995: "nina",
+    1996: "neutral", 1997: "nino", 1998: "nina", 1999: "nina", 2000: "nina",
+    2001: "neutral", 2002: "nino", 2003: "neutral", 2004: "nino", 2005: "nina",
+    2006: "nino", 2007: "nina", 2008: "nina", 2009: "nino", 2010: "nina",
+    2011: "nina", 2012: "neutral", 2013: "neutral", 2014: "neutral", 2015: "nino",
+    2016: "neutral", 2017: "nina", 2018: "nino", 2019: "nino", 2020: "nina",
+    2021: "nina", 2022: "nina", 2023: "nino", 2024: "neutral", 2025: "neutral",
+    2026: "neutral",
+  };
+  const ENSO_PHASE_LABELS = { nino: "El Niño", nina: "La Niña", neutral: "Neutral" };
+  const ENSO_PHASE_VARS = { nino: "--series-orange", nina: "--series-aqua", neutral: "--series-normal" };
+
+  function ensoPhase(year) {
+    return ENSO_PHASE_BY_YEAR[year] || "neutral";
+  }
+
+  function ensoColor(phase) {
+    return seriesColor(ENSO_PHASE_VARS[phase]);
+  }
+
   function monthTickLabel(mmdd) {
     const [m, d] = mmdd.split("-").map(Number);
     return `${MONTH_ABBR[m - 1]} ${d}`;
@@ -811,7 +844,9 @@
     const k = (maxR - baseR) / ceiling;
 
     drawLegend("legend-radial-years", [
-      { label: "Daily rainfall (spike height), clamped at the 99th percentile", color: seriesColor("--series-blue"), style: "swatch" },
+      { label: "El Niño", color: ensoColor("nino"), style: "swatch" },
+      { label: "La Niña", color: ensoColor("nina"), style: "swatch" },
+      { label: "Neutral", color: ensoColor("neutral"), style: "swatch" },
     ]);
 
     const angle = (idx) => (idx / 366) * 2 * Math.PI;
@@ -834,22 +869,30 @@
       });
       const pts = d3.range(366).map((idx) => ({ idx, value: byDay.get(idx) || 0 }));
       const annualTotal = d3.sum(pts, (p) => p.value);
+      const phase = ensoPhase(year);
+      const color = ensoColor(phase);
 
       const g = plot.append("g").attr("transform", `translate(${cx},${cy})`);
       g.append("circle").attr("r", baseR).attr("fill", "none").attr("class", "gridline").attr("stroke-dasharray", "2,2");
-      const opacity = 0.35 + 0.65 * (i / Math.max(1, years.length - 1));
       g.append("path")
         .datum(pts)
         .attr("d", lineGen)
-        .attr("fill", seriesColor("--series-blue"))
+        .attr("fill", color)
         .attr("fill-opacity", 0.22)
-        .attr("stroke", seriesColor("--series-blue"))
+        .attr("stroke", color)
         .attr("stroke-width", 1.2)
-        .style("opacity", opacity)
         .on("mousemove", (event) =>
-          showTooltip(tooltip, container, event, String(year), [
-            { label: "Annual total", color: seriesColor("--series-blue"), value: `${annualTotal.toFixed(1)}"` },
-          ], (v) => v)
+          showTooltip(
+            tooltip,
+            container,
+            event,
+            String(year),
+            [
+              { label: "ENSO phase", color, value: ENSO_PHASE_LABELS[phase] },
+              { label: "Annual total", color, value: `${annualTotal.toFixed(1)}"` },
+            ],
+            (v) => v
+          )
         )
         .on("mouseleave", () => tooltip.style("opacity", 0));
       g.append("text").attr("class", "chart-label").attr("text-anchor", "middle").attr("y", maxR + 14).text(year);
