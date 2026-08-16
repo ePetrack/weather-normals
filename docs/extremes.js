@@ -83,6 +83,35 @@
     return seriesColor(ENSO_PHASE_VARS[phase]);
   }
 
+  // Meteorological-season breakdown of ENSO phase, for the year-rings
+  // chart's segmented ring. Defaults every season to that year's whole-year
+  // ENSO_PHASE_BY_YEAR label; ENSO_SEASON_OVERRIDES refines the handful of
+  // years known to have flipped phase mid-year. Winter spans the Dec/Jan
+  // seam, so it appears as two segments per ring (Jan-Feb tail of one
+  // winter, Dec onset of the next) that can legitimately differ. Segment
+  // assignment for a flip landing mid-season is a judgment call at this
+  // 3-month granularity, not independently re-verified against primary
+  // ONI data — flagged here rather than presented as more precise than it is.
+  const SEASONS = [
+    { key: "winterTail", label: "Winter (Jan–Feb)", startIdx: 0, endIdx: 60 },
+    { key: "spring", label: "Spring (Mar–May)", startIdx: 60, endIdx: 152 },
+    { key: "summer", label: "Summer (Jun–Aug)", startIdx: 152, endIdx: 244 },
+    { key: "fall", label: "Fall (Sep–Nov)", startIdx: 244, endIdx: 335 },
+    { key: "winterOnset", label: "Winter (Dec)", startIdx: 335, endIdx: 366 },
+  ];
+  const ENSO_SEASON_OVERRIDES = {
+    1996: { winterTail: "nina" },
+    1998: { winterTail: "nino", summer: "nina", fall: "nina", winterOnset: "nina" },
+    2010: { winterTail: "nino", summer: "nina", fall: "nina", winterOnset: "nina" },
+    2016: { winterTail: "nino", spring: "neutral", summer: "neutral", fall: "nina", winterOnset: "nina" },
+    2023: { winterTail: "nina", spring: "neutral" },
+    2024: { winterTail: "nino", spring: "nino", summer: "neutral", fall: "neutral", winterOnset: "neutral" },
+  };
+
+  function seasonPhase(year, seasonKey) {
+    return (ENSO_SEASON_OVERRIDES[year] && ENSO_SEASON_OVERRIDES[year][seasonKey]) || ensoPhase(year);
+  }
+
   function monthTickLabel(mmdd) {
     const [m, d] = mmdd.split("-").map(Number);
     return `${MONTH_ABBR[m - 1]} ${d}`;
@@ -825,7 +854,7 @@
   // Chart 7: Radial year-rings — small multiples, one polar glyph per year
   // ---------------------------------------------------------------------
   function drawRadialYears(normalsDaily, observed, years) {
-    const { dayIndex } = buildDayIndex(normalsDaily);
+    const { dayOrder, dayIndex } = buildDayIndex(normalsDaily);
     const byYear = d3.group(observed, (d) => d.date.slice(0, 4));
     const cols = 7;
     const rows = Math.ceil(years.length / cols);
@@ -844,17 +873,33 @@
     const k = (maxR - baseR) / ceiling;
 
     drawLegend("legend-radial-years", [
-      { label: "El Niño", color: ensoColor("nino"), style: "swatch" },
-      { label: "La Niña", color: ensoColor("nina"), style: "swatch" },
-      { label: "Neutral", color: ensoColor("neutral"), style: "swatch" },
+      ...INTENSITY_BUCKETS.map((b) => ({ label: b.label, color: intensityColor(b.key), style: "swatch" })),
+      { label: "El Niño (season)", color: ensoColor("nino"), style: "line" },
+      { label: "La Niña (season)", color: ensoColor("nina"), style: "line" },
+      { label: "Neutral (season)", color: ensoColor("neutral"), style: "line" },
     ]);
 
-    const angle = (idx) => (idx / 366) * 2 * Math.PI;
-    const lineGen = d3
-      .lineRadial()
-      .angle((d) => angle(d.idx))
-      .radius((d) => baseR + k * Math.min(d.value, ceiling))
-      .curve(d3.curveLinearClosed);
+    // Precompute colors once — resolved via getComputedStyle, so doing this
+    // per-spoke across ~13k marks would be wasteful for what's only 8 values.
+    const bucketColorMap = new Map(INTENSITY_BUCKETS.map((b) => [b.key, intensityColor(b.key)]));
+    const ensoColorMap = new Map(["nino", "nina", "neutral"].map((p) => [p, ensoColor(p)]));
+
+    const ringOuter = baseR;
+    const ringInner = baseR - 4;
+    const SEASON_BOUND_IDX = [60, 152, 244, 335]; // Mar 1, Jun 1, Sep 1, Dec 1
+
+    const angle = (idx) => (idx / 366) * 2 * Math.PI; // idx 0 = 12 o'clock, clockwise
+    const polar = (idx, r) => {
+      const a = angle(idx);
+      return [r * Math.sin(a), -r * Math.cos(a)];
+    };
+    const arcGen = d3
+      .arc()
+      .innerRadius(ringInner)
+      .outerRadius(ringOuter)
+      .padAngle(0.025)
+      .startAngle((d) => angle(d.startIdx))
+      .endAngle((d) => angle(d.endIdx));
 
     years.forEach((year, i) => {
       const col = i % cols;
@@ -868,19 +913,17 @@
         if (idx !== undefined) byDay.set(idx, r.precip);
       });
       const pts = d3.range(366).map((idx) => ({ idx, value: byDay.get(idx) || 0 }));
+      const wetDays = pts.filter((p) => p.value > 0);
       const annualTotal = d3.sum(pts, (p) => p.value);
-      const phase = ensoPhase(year);
-      const color = ensoColor(phase);
 
       const g = plot.append("g").attr("transform", `translate(${cx},${cy})`);
-      g.append("circle").attr("r", baseR).attr("fill", "none").attr("class", "gridline").attr("stroke-dasharray", "2,2");
-      g.append("path")
-        .datum(pts)
-        .attr("d", lineGen)
-        .attr("fill", color)
-        .attr("fill-opacity", 0.22)
-        .attr("stroke", color)
-        .attr("stroke-width", 1.2)
+
+      // Center hover target for the annual summary — sits behind everything
+      // else (drawn first) and exactly fills the ring's interior, so it
+      // never competes for hover with the ring segments or spokes.
+      g.append("circle")
+        .attr("r", ringInner)
+        .attr("fill", "transparent")
         .on("mousemove", (event) =>
           showTooltip(
             tooltip,
@@ -888,13 +931,80 @@
             event,
             String(year),
             [
-              { label: "ENSO phase", color, value: ENSO_PHASE_LABELS[phase] },
-              { label: "Annual total", color, value: `${annualTotal.toFixed(1)}"` },
+              { label: "Annual total", color: seriesColor("--series-normal"), value: `${annualTotal.toFixed(1)}"` },
+              { label: "Wet days", color: seriesColor("--series-normal"), value: String(wetDays.length) },
             ],
             (v) => v
           )
         )
         .on("mouseleave", () => tooltip.style("opacity", 0));
+
+      // ENSO season-phase ring: most years render as one uniform-colored
+      // ring (all 5 segments share a phase); years where ENSO flipped
+      // mid-year show a visibly multi-colored ring.
+      g.selectAll(".enso-arc")
+        .data(SEASONS)
+        .join("path")
+        .attr("class", "enso-arc")
+        .attr("d", arcGen)
+        .attr("fill", (d) => ensoColorMap.get(seasonPhase(year, d.key)))
+        .on("mousemove", (event, d) => {
+          const phase = seasonPhase(year, d.key);
+          showTooltip(
+            tooltip,
+            container,
+            event,
+            `${year} — ${d.label}`,
+            [{ label: "ENSO phase", color: ensoColorMap.get(phase), value: ENSO_PHASE_LABELS[phase] }],
+            (v) => v
+          );
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0));
+
+      // Season divider lines — fixed visual reference for "where in the
+      // year," independent of any data.
+      g.selectAll(".season-divider")
+        .data(SEASON_BOUND_IDX)
+        .join("line")
+        .attr("class", "gridline season-divider")
+        .attr("x1", (idx) => polar(idx, ringInner)[0])
+        .attr("y1", (idx) => polar(idx, ringInner)[1])
+        .attr("x2", (idx) => polar(idx, maxR)[0])
+        .attr("y2", (idx) => polar(idx, maxR)[1])
+        .attr("stroke-width", 0.6)
+        .attr("pointer-events", "none");
+
+      // One spoke per rainy day — length and color both encode that day's
+      // rainfall (color via the same intensity scale as the calendar
+      // heatmap). Dry/missing days get no mark at all.
+      g.selectAll(".spoke")
+        .data(wetDays)
+        .join("line")
+        .attr("class", "spoke")
+        .attr("x1", (d) => polar(d.idx, ringOuter)[0])
+        .attr("y1", (d) => polar(d.idx, ringOuter)[1])
+        .attr("x2", (d) => polar(d.idx, ringOuter + k * Math.min(d.value, ceiling))[0])
+        .attr("y2", (d) => polar(d.idx, ringOuter + k * Math.min(d.value, ceiling))[1])
+        .attr("stroke", (d) => bucketColorMap.get(intensityBucket(d.value).key))
+        .attr("stroke-width", 1)
+        .attr("stroke-linecap", "butt")
+        .on("mousemove", (event, d) => {
+          const bucket = intensityBucket(d.value);
+          const dateLabel = fmtDate(parseISODate(`${year}-${dayOrder[d.idx]}`));
+          showTooltip(
+            tooltip,
+            container,
+            event,
+            dateLabel,
+            [
+              { label: "Precip", color: bucketColorMap.get(bucket.key), value: `${d.value.toFixed(2)}"` },
+              { label: "Intensity", color: bucketColorMap.get(bucket.key), value: bucket.label },
+            ],
+            (v) => v
+          );
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0));
+
       g.append("text").attr("class", "chart-label").attr("text-anchor", "middle").attr("y", maxR + 14).text(year);
     });
   }
