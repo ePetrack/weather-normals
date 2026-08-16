@@ -1,0 +1,8 @@
+# Stations tracked by the pipeline and shown on the site.
+# `id` becomes the folder name under docs/data/ and the value used in the
+# site's station picker, so keep it a short, URL-safe slug.
+# `sid` is the ACIS station identifier (an ICAO airport code works directly).
+stations:
+  - id: pittsburgh
+    name: "Pittsburgh, PA"
+    sid: "KPIT"

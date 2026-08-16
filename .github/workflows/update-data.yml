@@ -1,0 +1,39 @@
+name: Update weather data
+
+on:
+  schedule:
+    # Daily at 10:00 UTC (~5-6am US Eastern), after the prior day's
+    # observations have been finalized.
+    - cron: "0 10 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Fetch climate normals (only if missing)
+        run: python scripts/fetch_normals.py
+
+      - name: Fetch observed data
+        run: python scripts/fetch_observed.py
+
+      - name: Commit and push data updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update weather data"
+          file_pattern: "docs/data/**"

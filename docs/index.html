@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Weather Normals Tracker</title>
+<meta name="description" content="How this year's temperature and precipitation compare to the 1991-2020 NOAA climate normals." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Weather Normals Tracker</h1>
+    <p class="subtitle">
+      How this year's temperature and precipitation compare to the
+      1991&ndash;2020 NOAA climate normals and recent years.
+    </p>
+    <div class="station-picker">
+      <label for="station-select">Station</label>
+      <select id="station-select"></select>
+      <span id="last-updated"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Cumulative precipitation</h2>
+      <p class="card-note">Running year-to-date precipitation vs. the normal and recent years.</p>
+      <div id="legend-precip" class="legend"></div>
+      <div id="chart-cum-precip" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Daily temperature vs. normal</h2>
+      <p class="card-note">Last 120 days: daily high/low vs. the climatological normal range.</p>
+      <div id="legend-temp" class="legend"></div>
+      <div id="chart-temp-band" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly temperature</h2>
+      <p class="card-note">Average temperature by month: this year vs. normal vs. last year.</p>
+      <div id="legend-monthly-temp" class="legend"></div>
+      <div id="chart-monthly-temp" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly precipitation</h2>
+      <p class="card-note">Total precipitation by month: this year vs. normal vs. last year.</p>
+      <div id="legend-monthly-precip" class="legend"></div>
+      <div id="chart-monthly-precip" class="chart"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Data via the <a href="https://www.rcc-acis.org/" target="_blank" rel="noopener">ACIS Web Services API</a>,
+      the same source behind the NWS's NOWData tool. Normals are the 1991&ndash;2020 NOAA climate normals.
+      Updated automatically every day via GitHub Actions &mdash;
+      <a href="https://github.com/ePetrack/weather-normals" target="_blank" rel="noopener">source on GitHub</a>.
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
