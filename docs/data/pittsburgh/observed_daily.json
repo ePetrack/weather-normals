@@ -91078,6 +91078,13 @@
   },
   {
     "date": "2026-08-16",
+    "tmax": 85.0,
+    "tmin": 71.0,
+    "precip": 1.25,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-08-17",
     "tmax": null,
     "tmin": null,
     "precip": null,
