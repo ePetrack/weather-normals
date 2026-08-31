@@ -91176,6 +91176,13 @@
   },
   {
     "date": "2026-08-30",
+    "tmax": 85.0,
+    "tmin": 62.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-08-31",
     "tmax": null,
     "tmin": null,
     "precip": null,
