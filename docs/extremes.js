@@ -23,32 +23,14 @@
     presentYears,
     showTooltip,
     syncNavStationParam,
+    INTENSITY_BUCKETS,
+    intensityBucket,
+    intensityColor,
+    detectStormEvents,
   } = window.ChartUtils;
 
   const NORMALS_START_YEAR = 1991;
   const NORMALS_END_YEAR = 2020;
-
-  // ---------------------------------------------------------------------
-  // Shared intensity vocabulary — used by the heatmap, storm-count,
-  // streamgraph, and bubble-strip charts so a "heavy" day/storm means the
-  // same thing everywhere on this page.
-  // ---------------------------------------------------------------------
-  const INTENSITY_BUCKETS = [
-    { key: "trace", label: "Trace (<0.01\")", max: 0.01 },
-    { key: "light", label: "Light (0.01–0.24\")", max: 0.25 },
-    { key: "moderate", label: "Moderate (0.25–0.74\")", max: 0.75 },
-    { key: "heavy", label: "Heavy (0.75–1.49\")", max: 1.5 },
-    { key: "extreme", label: "Extreme (1.5\"+)", max: Infinity },
-  ];
-
-  function intensityBucket(value) {
-    if (value == null || value <= 0) return null;
-    return INTENSITY_BUCKETS.find((b) => value < b.max) || INTENSITY_BUCKETS[INTENSITY_BUCKETS.length - 1];
-  }
-
-  function intensityColor(key) {
-    return seriesColor(`--intensity-${key}`);
-  }
 
   // ---------------------------------------------------------------------
   // ENSO (El Niño Southern Oscillation) phase per calendar year, split by
@@ -153,58 +135,6 @@
   function monthTickLabel(mmdd) {
     const [m, d] = mmdd.split("-").map(Number);
     return `${MONTH_ABBR[m - 1]} ${d}`;
-  }
-
-  // ---------------------------------------------------------------------
-  // Storm-event detection: a run of consecutive wet days is one "event."
-  // A single missing/trace day inside a run is bridged (ACIS trace "T"
-  // collapses to null and is indistinguishable from a real gap); two or
-  // more consecutive missing days end the event. A dry day always ends it.
-  // Callers pass any date-ascending subset of `observed` — a single year
-  // (accepting that a Dec 31 -> Jan 1 storm splits) or the full record
-  // (true storm boundaries).
-  // ---------------------------------------------------------------------
-  function detectStormEvents(rows) {
-    const events = [];
-    let current = null;
-    let pendingGap = 0;
-
-    const finalize = () => {
-      if (!current) return;
-      events.push({
-        startDate: current.days[0],
-        endDate: current.days[current.days.length - 1],
-        days: current.days,
-        totalPrecip: current.totalPrecip,
-        peakPrecip: current.peakPrecip,
-        peakDate: current.peakDate,
-      });
-      current = null;
-    };
-
-    for (const r of rows) {
-      const wet = r.precip != null && r.precip > 0;
-      const missing = r.precip == null;
-
-      if (wet) {
-        if (current && pendingGap >= 2) finalize();
-        if (!current) current = { days: [], totalPrecip: 0, peakPrecip: -Infinity, peakDate: null };
-        pendingGap = 0;
-        current.days.push(r.date);
-        current.totalPrecip += r.precip;
-        if (r.precip > current.peakPrecip) {
-          current.peakPrecip = r.precip;
-          current.peakDate = r.date;
-        }
-      } else if (missing && current) {
-        pendingGap += 1;
-      } else {
-        finalize();
-        pendingGap = 0;
-      }
-    }
-    finalize();
-    return events;
   }
 
   // ---------------------------------------------------------------------

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recent Events — Weather Normals Tracker</title>
+<meta name="description" content="Notable storms and weather events, put in context against the 35-year climate record." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Recent Events</h1>
+    <p class="subtitle">
+      Notable storms, put in context against the full climate record — how
+      big, how rare, and how they happened.
+    </p>
+    <nav class="page-nav">
+      <a href="index.html" data-nav-target="index.html">Normals</a>
+      <a href="extremes.html" data-nav-target="extremes.html">Extremes</a>
+      <a href="events.html" data-nav-target="events.html" class="active">Events</a>
+    </nav>
+    <div class="station-picker">
+      <label for="station-select">Station</label>
+      <select id="station-select"></select>
+      <span id="last-updated"></span>
+    </div>
+  </header>
+
+  <main id="events-list">
+  </main>
+
+  <footer>
+    <p>
+      Data via the <a href="https://www.rcc-acis.org/" target="_blank" rel="noopener">ACIS Web Services API</a>,
+      the same source behind the NWS's NOWData tool. Normals are the 1991&ndash;2020 NOAA climate normals.
+      Rank and percentile are computed live from the full observed-daily record each time this page loads.
+      Updated automatically every day via GitHub Actions &mdash;
+      <a href="https://github.com/ePetrack/weather-normals" target="_blank" rel="noopener">source on GitHub</a>.
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="chart-utils.js"></script>
+  <script src="events.js"></script>
+</body>
+</html>
