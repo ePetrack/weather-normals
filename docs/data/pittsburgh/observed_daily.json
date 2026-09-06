@@ -91218,6 +91218,13 @@
   },
   {
     "date": "2026-09-05",
+    "tmax": 79.0,
+    "tmin": 65.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-06",
     "tmax": null,
     "tmin": null,
     "precip": null,
