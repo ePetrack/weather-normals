@@ -175,6 +175,104 @@ main {
   margin: 0 0 12px;
 }
 
+/* Event spotlight cards (docs/events.html) */
+.event-card h2 {
+  font-size: 1.3rem;
+  margin: 0 0 10px;
+}
+
+.event-eyebrow {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 4px;
+}
+
+.event-narrative {
+  color: var(--text-secondary);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  max-width: 68ch;
+  margin: 0 0 20px;
+}
+
+.event-narrative strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 0 28px;
+}
+
+.stat-tile {
+  background: var(--page);
+  padding: 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value .unit {
+  font-size: 0.7em;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.stat-label {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.event-chart-block {
+  margin: 0 0 24px;
+}
+
+.event-chart-block:last-child {
+  margin-bottom: 0;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+
+.panel-head h3 {
+  font-size: 0.96rem;
+  margin: 0;
+}
+
+.panel-note {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 560px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .chart {
   position: relative;
   width: 100%;
