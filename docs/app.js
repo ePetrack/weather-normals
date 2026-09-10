@@ -385,7 +385,7 @@
 
     if (!actualPoints.length) {
       showMessage("chart-rainfall-burnup", "No observations recorded yet this year.");
-      if (noteEl) noteEl.textContent = "";
+      if (noteEl) noteEl.innerHTML = "";
       return;
     }
 
@@ -399,15 +399,17 @@
 
     if (noteEl) {
       const direction = delta >= 0 ? "above" : "below";
-      let text =
-        `This year has recorded ${todayActual.toFixed(2)}" through ${monthTickLabel(dayOrder[todayIdx])} — ` +
-        `${Math.abs(delta).toFixed(2)}" ${direction} the 1991–2020 normal pace of ${todayNormal.toFixed(2)}"`;
+      const items = [
+        `Recorded ${todayActual.toFixed(2)}" through ${monthTickLabel(dayOrder[todayIdx])}.`,
+        `${Math.abs(delta).toFixed(2)}" ${direction} the 1991–2020 normal pace of ${todayNormal.toFixed(2)}".`,
+      ];
       if (avgDelta != null) {
         const avgDirection = avgDelta >= 0 ? "above" : "below";
-        text +=
-          ` and ${Math.abs(avgDelta).toFixed(2)}" ${avgDirection} the ${avgYears[0]}–${avgYears[avgYears.length - 1]} average pace of ${todayAvg.toFixed(2)}"`;
+        items.push(
+          `${Math.abs(avgDelta).toFixed(2)}" ${avgDirection} the ${avgYears[0]}–${avgYears[avgYears.length - 1]} average pace of ${todayAvg.toFixed(2)}".`
+        );
       }
-      noteEl.textContent = text + ".";
+      noteEl.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
     }
 
     // Forward-fill the actual series across every day index through today,
@@ -786,8 +788,8 @@
       rows,
       [
         { key: "normalPrecip", label: "Normal", color: seriesColor("--series-normal") },
-        { key: "thisYearPrecip", label: "This year", color: seriesColor("--series-blue") },
-        { key: "lastYearPrecip", label: "Last year", color: seriesColor("--series-orange") },
+        { key: "lastYearPrecip", label: "Last year", color: seriesColor("--series-navy") },
+        { key: "thisYearPrecip", label: "This year", color: seriesColor("--series-aqua") },
       ],
       { format: (d) => `${d.toFixed(1)}"`, ticks: 5 }
     );
