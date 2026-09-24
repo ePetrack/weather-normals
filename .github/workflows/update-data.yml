@@ -27,13 +27,24 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Fetch climate normals (only if missing)
+        id: normals
         run: python scripts/fetch_normals.py
+        continue-on-error: true
 
       - name: Fetch observed data
+        id: observed
         run: python scripts/fetch_observed.py
+        continue-on-error: true
 
+      # Always commit, even if a station failed above, so other stations'
+      # data still lands instead of being blocked by one bad one.
       - name: Commit and push data updates
+        if: always()
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "chore: update weather data"
           file_pattern: "docs/data/**"
+
+      - name: Fail the run if any station failed
+        if: steps.normals.outcome == 'failure' || steps.observed.outcome == 'failure'
+        run: exit 1

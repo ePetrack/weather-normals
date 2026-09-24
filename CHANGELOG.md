@@ -11,12 +11,23 @@ All notable changes to this project are documented in this file.
   site's station picker (`docs/stations.json`). Data populates on the next
   scheduled (or manually triggered) run of the data-update workflow, same
   as Pittsburgh.
-- **The other University of Pittsburgh regional campuses**: Greensburg, PA
-  (`KLBE`, Latrobe), Johnstown, PA (`KJST`), Titusville, PA (`KFKL`,
-  Franklin), and Pymatuning, PA (`KYNG`, Youngstown-Warren, OH) — the
-  Pymatuning Laboratory of Ecology. Titusville and Pymatuning don't have
-  their own long-record weather station, so they use the nearest one with
-  1991–2020 normals instead.
+- **Other University of Pittsburgh locations**: Johnstown, PA (`KJST`),
+  Titusville, PA (`KFKL`, Franklin), and Pymatuning, PA (`KYNG`,
+  Youngstown-Warren, OH) — the Pymatuning Laboratory of Ecology. Titusville
+  and Pymatuning don't have their own long-record weather station, so they
+  use the nearest one with 1991–2020 normals instead.
+  Greensburg was left out for now: its nearest airport (`KLBE`, Latrobe)
+  has no published 1991–2020 normals in ACIS, and this session couldn't
+  reach ACIS/NWS/NCEI directly to find a better substitute.
+
+### Fixed
+
+- **Pipeline fault isolation**: `fetch_normals.py` and `fetch_observed.py`
+  now skip a station that fails (e.g. a bad or unsupported station ID) and
+  keep going, instead of aborting the whole run and blocking every station
+  after it in the list. The workflow now also commits whatever data did
+  fetch successfully even if another station failed, and still fails the
+  job so a bad station doesn't go unnoticed.
 
 ## 2026-08-16
 

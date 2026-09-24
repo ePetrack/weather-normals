@@ -76,6 +76,7 @@ def main():
     )
     args = parser.parse_args()
 
+    failed = []
     for station in load_stations():
         out_dir = station_data_dir(station["id"])
         daily_path = out_dir / "normals_daily.json"
@@ -86,8 +87,15 @@ def main():
             continue
 
         print(f"[{station['id']}] fetching 1991-2020 normals for station {station['sid']}")
-        write_json(daily_path, fetch_daily_normals(station["sid"]))
-        write_json(monthly_path, fetch_monthly_normals(station["sid"]))
+        try:
+            write_json(daily_path, fetch_daily_normals(station["sid"]))
+            write_json(monthly_path, fetch_monthly_normals(station["sid"]))
+        except Exception as err:  # noqa: BLE001 - one bad station shouldn't block the rest
+            print(f"[{station['id']}] failed: {err}")
+            failed.append(station["id"])
+
+    if failed:
+        raise RuntimeError(f"Failed to fetch normals for: {', '.join(failed)}")
 
 
 if __name__ == "__main__":
