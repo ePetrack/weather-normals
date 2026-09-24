@@ -1,3 +1,5 @@
 [
-  { "id": "pittsburgh", "name": "Pittsburgh, PA (KPIT)" }
+  { "id": "pittsburgh", "name": "Pittsburgh, PA (KPIT)" },
+  { "id": "houston", "name": "Houston, TX (KIAH)" },
+  { "id": "bradford", "name": "Bradford, PA (KBFD)" }
 ]

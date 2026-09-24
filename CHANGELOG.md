@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-09-24
+
+### Added
+
+- **Houston, TX (`KIAH`)** and **Bradford, PA (`KBFD`)**: added as new
+  tracked stations in [`config/stations.yml`](config/stations.yml) and the
+  site's station picker (`docs/stations.json`). Data populates on the next
+  scheduled (or manually triggered) run of the data-update workflow, same
+  as Pittsburgh.
+
 ## 2026-08-16
 
 ### Added
