@@ -11,6 +11,12 @@ All notable changes to this project are documented in this file.
   site's station picker (`docs/stations.json`). Data populates on the next
   scheduled (or manually triggered) run of the data-update workflow, same
   as Pittsburgh.
+- **The other University of Pittsburgh regional campuses**: Greensburg, PA
+  (`KLBE`, Latrobe), Johnstown, PA (`KJST`), Titusville, PA (`KFKL`,
+  Franklin), and Pymatuning, PA (`KYNG`, Youngstown-Warren, OH) — the
+  Pymatuning Laboratory of Ecology. Titusville and Pymatuning don't have
+  their own long-record weather station, so they use the nearest one with
+  1991–2020 normals instead.
 
 ## 2026-08-16
 
