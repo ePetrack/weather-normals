@@ -25,7 +25,6 @@ Configured in [`config/stations.yml`](config/stations.yml). Currently:
 - Pittsburgh, PA (`KPIT`)
 - Houston, TX (`KIAH`)
 - Bradford, PA (`KBFD`) — Pitt-Bradford
-- Greensburg, PA (`KLBE`) — Pitt-Greensburg (nearest station: Latrobe)
 - Johnstown, PA (`KJST`) — Pitt-Johnstown
 - Titusville, PA (`KFKL`) — Pitt-Titusville (nearest station: Franklin)
 - Pymatuning, PA (`KYNG`) — Pymatuning Laboratory of Ecology (nearest station: Youngstown-Warren, OH)

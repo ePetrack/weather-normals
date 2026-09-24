@@ -12,9 +12,6 @@ stations:
   - id: bradford
     name: "Bradford, PA"
     sid: "KBFD"
-  - id: greensburg
-    name: "Greensburg, PA"
-    sid: "KLBE"
   - id: johnstown
     name: "Johnstown, PA"
     sid: "KJST"
