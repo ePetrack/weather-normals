@@ -9,3 +9,6 @@ stations:
   - id: houston
     name: "Houston, TX"
     sid: "KIAH"
+  - id: bradford
+    name: "Bradford, PA"
+    sid: "KBFD"
