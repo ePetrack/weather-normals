@@ -1,0 +1,86 @@
+[
+  {
+    "month": 1,
+    "month_name": "Jan",
+    "tmax_normal": 64.0,
+    "tmin_normal": 44.0,
+    "precip_normal_total": 3.76
+  },
+  {
+    "month": 2,
+    "month_name": "Feb",
+    "tmax_normal": 68.0,
+    "tmin_normal": 48.0,
+    "precip_normal_total": 2.97
+  },
+  {
+    "month": 3,
+    "month_name": "Mar",
+    "tmax_normal": 74.0,
+    "tmin_normal": 54.0,
+    "precip_normal_total": 3.47
+  },
+  {
+    "month": 4,
+    "month_name": "Apr",
+    "tmax_normal": 80.0,
+    "tmin_normal": 60.0,
+    "precip_normal_total": 3.95
+  },
+  {
+    "month": 5,
+    "month_name": "May",
+    "tmax_normal": 87.0,
+    "tmin_normal": 68.0,
+    "precip_normal_total": 5.01
+  },
+  {
+    "month": 6,
+    "month_name": "Jun",
+    "tmax_normal": 92.0,
+    "tmin_normal": 74.0,
+    "precip_normal_total": 6.0
+  },
+  {
+    "month": 7,
+    "month_name": "Jul",
+    "tmax_normal": 94.0,
+    "tmin_normal": 76.0,
+    "precip_normal_total": 3.77
+  },
+  {
+    "month": 8,
+    "month_name": "Aug",
+    "tmax_normal": 95.0,
+    "tmin_normal": 75.0,
+    "precip_normal_total": 4.84
+  },
+  {
+    "month": 9,
+    "month_name": "Sep",
+    "tmax_normal": 90.0,
+    "tmin_normal": 71.0,
+    "precip_normal_total": 4.71
+  },
+  {
+    "month": 10,
+    "month_name": "Oct",
+    "tmax_normal": 83.0,
+    "tmin_normal": 61.0,
+    "precip_normal_total": 5.46
+  },
+  {
+    "month": 11,
+    "month_name": "Nov",
+    "tmax_normal": 73.0,
+    "tmin_normal": 52.0,
+    "precip_normal_total": 3.87
+  },
+  {
+    "month": 12,
+    "month_name": "Dec",
+    "tmax_normal": 65.0,
+    "tmin_normal": 46.0,
+    "precip_normal_total": 4.03
+  }
+]
