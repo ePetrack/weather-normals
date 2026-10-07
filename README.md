@@ -18,6 +18,11 @@ read.
 - `docs/` is a plain static site (no build step) served by GitHub Pages,
   which reads that JSON client-side and renders the comparison charts.
 
+## Pages
+
+Normals, Extremes, Events, and Climate & Energy (degree days, growing degree
+days, freeze/heat counts, heat waves, year rankings).
+
 ## Tracked stations
 
 Configured in [`config/stations.yml`](config/stations.yml). Currently:

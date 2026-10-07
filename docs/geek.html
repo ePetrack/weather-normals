@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Climate &amp; Energy — Weather Normals Tracker</title>
+<meta name="description" content="Heating and cooling degree days, growing degree days, freeze and heat counts, and heat waves, put in context against the 35-year record." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Climate &amp; Energy</h1>
+    <p class="subtitle">
+      Heating and cooling degree days, growing degree days, freeze and heat
+      counts, and heat waves &mdash; the numbers behind energy demand and
+      the growing season.
+    </p>
+    <nav class="page-nav">
+      <a href="index.html" data-nav-target="index.html">Normals</a>
+      <a href="extremes.html" data-nav-target="extremes.html">Extremes</a>
+      <a href="events.html" data-nav-target="events.html">Events</a>
+      <a href="geek.html" data-nav-target="geek.html" class="active">Climate &amp; Energy</a>
+    </nav>
+    <div class="station-picker">
+      <label for="station-select">Station</label>
+      <select id="station-select"></select>
+      <span id="last-updated"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Season to date</h2>
+      <p class="card-note">
+        Heating degree days since Jul 1, cooling and growing degree days since Jan 1, and
+        the last 30 days' temperature vs. normal.
+      </p>
+      <div class="year-select">
+        <span class="year-select-label">Degree-day base (&deg;F):</span>
+        <div class="year-chips" id="base-select"></div>
+      </div>
+      <div class="stat-grid" id="stat-tiles"></div>
+    </section>
+
+    <section class="card">
+      <h2>30-day temperature anomaly</h2>
+      <p class="card-note">Rolling 30-day average temperature minus the 1991&ndash;2020 normal, past 12 months.</p>
+      <div id="chart-anomaly" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Heating degree days</h2>
+      <p class="card-note">Cumulative HDD for the heating season (Jul 1 &ndash; Jun 30): this season vs. last vs. normal. More HDD means more heating demand.</p>
+      <div id="legend-hdd" class="legend"></div>
+      <div id="chart-hdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Cooling degree days</h2>
+      <p class="card-note">Cumulative CDD for the calendar year: this year vs. last vs. normal. More CDD means more cooling demand.</p>
+      <div id="legend-cdd" class="legend"></div>
+      <div id="chart-cdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Growing degree days</h2>
+      <p class="card-note">Cumulative GDD (base 50&deg;F, temperatures capped at 86&deg;F) for the calendar year. Fixed base; unaffected by the selector.</p>
+      <div id="legend-gdd" class="legend"></div>
+      <div id="chart-gdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly heating degree days</h2>
+      <div id="legend-monthly-hdd" class="legend"></div>
+      <div id="chart-monthly-hdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Monthly cooling degree days</h2>
+      <div id="legend-monthly-cdd" class="legend"></div>
+      <div id="chart-monthly-cdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Annual heating degree days</h2>
+      <p class="card-note">Calendar-year totals with the record average and a linear trend (complete years only).</p>
+      <div id="legend-annual-hdd" class="legend"></div>
+      <div id="chart-annual-hdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Annual cooling degree days</h2>
+      <div id="legend-annual-cdd" class="legend"></div>
+      <div id="chart-annual-cdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Hot days per year</h2>
+      <p class="card-note">Days with a high of 90&deg;F or more.</p>
+      <div id="legend-hot-days" class="legend"></div>
+      <div id="chart-hot-days" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Freeze days per year</h2>
+      <p class="card-note">Days with a low of 32&deg;F or less.</p>
+      <div id="legend-freeze-days" class="legend"></div>
+      <div id="chart-freeze-days" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Freeze dates</h2>
+      <p class="card-note">Last spring and first fall freeze (low of 32&deg;F or less) and the freeze-free days between, last 10 years.</p>
+      <div id="freeze-table"></div>
+    </section>
+
+    <section class="card">
+      <h2>Heat waves &amp; cold snaps</h2>
+      <p class="card-note">Longest runs on record of 90&deg;F+ highs and of 20&deg;F-or-lower lows (3 days minimum).</p>
+      <div class="rank-grid" id="streak-lists"></div>
+    </section>
+
+    <section class="card">
+      <h2>Year rankings</h2>
+      <p class="card-note">Complete years only (350+ days of data).</p>
+      <div class="rank-grid" id="year-rankings"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>
+      Data via the <a href="https://www.rcc-acis.org/" target="_blank" rel="noopener">ACIS Web Services API</a>,
+      the same source behind the NWS's NOWData tool. Degree days are computed live in your browser from each
+      day's high and low: mean = (high + low) / 2, HDD = max(0, base &minus; mean), CDD = max(0, mean &minus; base).
+      Normal degree days are derived from the 1991&ndash;2020 daily normal highs and lows, so they differ slightly
+      from NOAA's published degree-day normals. Days with a missing high or low are skipped.
+      Updated automatically every day via GitHub Actions &mdash;
+      <a href="https://github.com/ePetrack/weather-normals" target="_blank" rel="noopener">source on GitHub</a>.
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="chart-utils.js"></script>
+  <script src="geek.js"></script>
+</body>
+</html>

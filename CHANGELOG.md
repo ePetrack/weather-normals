@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-08
+
+### Added
+
+- **Climate & Energy tab** (`docs/geek.html`): heating, cooling and growing
+  degree days (cumulative, monthly and annual with trend), a 30-day
+  temperature anomaly, hot/freeze day counts, freeze dates, heat waves and
+  cold snaps, and year rankings. Degree days are computed in the browser from
+  daily highs and lows (base selectable: 50/55/60/65°F), so no pipeline
+  changes; normal degree days are derived from the daily normal highs/lows and
+  differ slightly from NOAA's published values.
+
 ## 2026-10-07
 
 ### Changed

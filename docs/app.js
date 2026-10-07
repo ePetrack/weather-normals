@@ -24,6 +24,8 @@
     showTooltip,
     syncNavStationParam,
     dataThroughText,
+    roundedTopRectPath,
+    drawMonthlyGrouped,
   } = window.ChartUtils;
   const TEMP_WINDOW_DAYS = 120;
 
@@ -700,67 +702,6 @@
         lastYearPrecip: lastYear[n.month - 1].precipTotal,
         isPartial: n.month === currentMonth,
       }));
-  }
-
-  // Rounded top corners, square baseline — matches the bar mark spec.
-  function roundedTopRectPath(x, y, width, height, radius) {
-    if (height <= 0 || width <= 0) return "";
-    const r = Math.min(radius, height, width / 2);
-    return `M${x},${y + height} V${y + r} A${r},${r} 0 0 1 ${x + r},${y} H${x + width - r} A${r},${r} 0 0 1 ${x + width},${y + r} V${y + height} Z`;
-  }
-
-  function drawMonthlyGrouped(containerId, legendId, rows, seriesDefs, { format, ticks }) {
-    drawLegend(legendId, seriesDefs.map((s) => ({ label: s.label, color: s.color, style: "swatch" })));
-
-    const margin = { top: 10, right: 16, bottom: 26, left: 46 };
-    const { plot, innerWidth, innerHeight, tooltip, container } = buildSvg(containerId, { margin, height: 300 });
-
-    const x0 = d3.scaleBand().domain(rows.map((r) => r.month)).range([0, innerWidth]).paddingInner(0.28).paddingOuter(0.08);
-    const x1 = d3.scaleBand().domain(seriesDefs.map((s) => s.key)).range([0, x0.bandwidth()]).padding(0.08);
-    const maxY = d3.max(rows, (r) => d3.max(seriesDefs, (s) => r[s.key] || 0)) || 1;
-    const y = d3.scaleLinear().domain([0, maxY * 1.1]).nice().range([innerHeight, 0]);
-
-    yAxisLeft(plot, y, innerWidth, { ticks, format });
-    plot
-      .append("g")
-      .attr("class", "axis")
-      .attr("transform", `translate(0,${innerHeight})`)
-      .call(d3.axisBottom(x0).tickFormat((m) => MONTH_ABBR[m - 1]))
-      .call((g) => g.select(".domain").attr("class", "baseline"));
-
-    const groups = plot
-      .selectAll(".month-group")
-      .data(rows)
-      .join("g")
-      .attr("transform", (r) => `translate(${x0(r.month)},0)`);
-
-    const barWidth = Math.min(24, x1.bandwidth());
-    const barOffset = x1.bandwidth() / 2 - barWidth / 2;
-
-    seriesDefs.forEach((s) => {
-      groups
-        .append("path")
-        .attr("d", (r) => {
-          const h = r[s.key] != null ? innerHeight - y(r[s.key]) : 0;
-          const bx = x1(s.key) + barOffset;
-          return roundedTopRectPath(bx, innerHeight - h, barWidth, h, 4);
-        })
-        .attr("fill", s.color)
-        .attr("opacity", (r) => (s.key.startsWith("thisYear") && r.isPartial ? 0.55 : 1))
-        .on("mousemove", function (event, r) {
-          if (r[s.key] == null) return;
-          const label = s.key.startsWith("thisYear") && r.isPartial ? `${s.label} (month to date)` : s.label;
-          showTooltip(
-            tooltip,
-            container,
-            event,
-            MONTH_ABBR[r.month - 1],
-            [{ label, color: s.color, value: r[s.key] }],
-            format
-          );
-        })
-        .on("mouseleave", () => tooltip.style("opacity", 0));
-    });
   }
 
   function drawMonthlyTemp(normalsMonthly, observed) {
