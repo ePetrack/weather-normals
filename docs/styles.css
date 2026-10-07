@@ -460,3 +460,42 @@ footer {
 footer a {
   color: var(--text-secondary);
 }
+
+/* Climate & Energy page */
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.rank-grid h3 {
+  font-size: 0.96rem;
+  margin: 0 0 8px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table th,
+.data-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table th {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.data-table td.num,
+.data-table th.num {
+  text-align: right;
+}
+
+.stat-value.up { color: var(--series-orange); }
+.stat-value.down { color: var(--series-blue); }
