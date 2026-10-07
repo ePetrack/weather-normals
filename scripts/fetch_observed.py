@@ -49,6 +49,7 @@ def fetch_observed(sid, sdate, edate):
 
 def main():
     today = dt.date.today().isoformat()
+    failed = []
 
     for station in load_stations():
         out_dir = station_data_dir(station["id"])
@@ -70,7 +71,12 @@ def main():
             sdate = f"{BACKFILL_START_YEAR}-01-01"
 
         print(f"[{station['id']}] fetching observed data {sdate}..{today}")
-        new_records = fetch_observed(station["sid"], sdate, today)
+        try:
+            new_records = fetch_observed(station["sid"], sdate, today)
+        except Exception as err:  # noqa: BLE001 - one bad station must not block the rest
+            print(f"::error::[{station['id']}] observed fetch failed: {err}")
+            failed.append(station["id"])
+            continue
 
         by_date = {r["date"]: r for r in existing}
         for r in new_records:
@@ -78,6 +84,9 @@ def main():
 
         merged = [by_date[d] for d in sorted(by_date)]
         write_json(obs_path, merged)
+
+    if failed:
+        raise SystemExit(f"Observed fetch failed for: {', '.join(failed)}")
 
 
 if __name__ == "__main__":
