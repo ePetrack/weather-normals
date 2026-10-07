@@ -29,6 +29,11 @@ jobs:
       - name: Fetch climate normals (only if missing)
         run: python scripts/fetch_normals.py
 
+      - name: Fetch official degree-day normals (only if missing)
+        # Optional: the site derives degree-day normals itself when these are absent.
+        continue-on-error: true
+        run: python scripts/fetch_degree_days.py
+
       - name: Fetch observed data
         if: always()
         run: python scripts/fetch_observed.py

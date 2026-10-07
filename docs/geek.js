@@ -71,12 +71,12 @@
     return dd ? dd[kind] : null;
   }
 
-  function prepare(normalsDaily, observed) {
+  function prepare(normalsDaily, observed, officialDegreeDays) {
     const byDate = new Map(observed.map((r) => [r.date, r]));
     const normalByMmdd = new Map(normalsDaily.map((n) => [n.date, n]));
     const { dayOrder } = buildDayIndex(normalsDaily);
     const lastObsDate = observed.length ? observed[observed.length - 1].date : null;
-    return { normalsDaily, observed, byDate, normalByMmdd, dayOrder, lastObsDate };
+    return { normalsDaily, observed, officialDegreeDays, byDate, normalByMmdd, dayOrder, lastObsDate };
   }
 
   const observedGetter = (kind) => (date) => {
@@ -231,12 +231,18 @@
       }
       return out;
     };
+    // NOAA's published normals are base 65 only; otherwise derive from the daily normals.
+    const official = state.base === 65 ? state.data.officialDegreeDays : null;
     const normalSums = Array(12).fill(0);
-    for (const n of normalsDaily) {
-      const v = dailyValue(kind, n.tmax_normal, n.tmin_normal);
-      if (v != null) normalSums[Number(n.date.slice(0, 2)) - 1] += v;
+    if (official) {
+      for (const r of official) normalSums[r.month - 1] = r[`${kind}_normal`];
+    } else {
+      for (const n of normalsDaily) {
+        const v = dailyValue(kind, n.tmax_normal, n.tmin_normal);
+        if (v != null) normalSums[Number(n.date.slice(0, 2)) - 1] += v;
+      }
+      normalSums[1] *= 28.25 / 29; // the 366-day normals include a full Feb 29
     }
-    normalSums[1] *= 28.25 / 29; // the 366-day normals include a full Feb 29
     const thisYear = monthSums(year);
     const lastYear = monthSums(year - 1);
 
@@ -252,7 +258,7 @@
       legendId,
       rows,
       [
-        { key: "normalVal", label: "Normal", color: seriesColor("--series-normal") },
+        { key: "normalVal", label: official ? "Normal (NOAA)" : "Normal", color: seriesColor("--series-normal") },
         { key: "lastYearVal", label: String(year - 1), color: seriesColor("--series-navy") },
         { key: "thisYearVal", label: String(year), color: seriesColor(blue ? "--series-blue" : "--series-orange") },
       ],
@@ -626,7 +632,9 @@
       clearPage();
       return;
     }
-    state.data = prepare(normalsDaily, observed);
+    // Optional file; absent until the pipeline has fetched it for this station.
+    const officialDegreeDays = await fetchJSON(`${base}/degree_days_normals.json`).catch(() => null);
+    state.data = prepare(normalsDaily, observed, officialDegreeDays);
     document.getElementById("last-updated").textContent = dataThroughText(state.data.lastObsDate);
     drawAll();
   }
