@@ -32,8 +32,7 @@
     <section class="card">
       <h2>Season to date</h2>
       <p class="card-note">
-        Heating degree days since Jul 1, cooling and growing degree days since Jan 1, and
-        the last 30 days' temperature vs. normal.
+        Heating, cooling and growing degree days since Jan 1, and the last 30 days' temperature vs. normal.
       </p>
       <div class="year-select">
         <span class="year-select-label">Degree-day base (&deg;F):</span>
@@ -50,7 +49,7 @@
 
     <section class="card">
       <h2>Heating degree days</h2>
-      <p class="card-note">Cumulative HDD for the heating season (Jul 1 &ndash; Jun 30): this season vs. last vs. normal. More HDD means more heating demand.</p>
+      <p class="card-note">Cumulative HDD for the calendar year: this year vs. last vs. normal. More HDD means more heating demand.</p>
       <div id="legend-hdd" class="legend"></div>
       <div id="chart-hdd" class="chart"></div>
     </section>
@@ -79,6 +78,30 @@
       <h2>Monthly cooling degree days</h2>
       <div id="legend-monthly-cdd" class="legend"></div>
       <div id="chart-monthly-cdd" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Heating &amp; cooling days</h2>
+      <p class="card-note">Days per month needing heat (mean below the base), cooling (mean above it) or neither. Left bar: record average; right bar: this year.</p>
+      <div id="legend-balance" class="legend"></div>
+      <div id="chart-balance" class="chart"></div>
+    </section>
+
+    <section class="card">
+      <h2>Energy budget estimator</h2>
+      <p class="card-note">
+        Enter what you spent last year and it is converted to a cost per degree day, then applied to this
+        year's weather so far and to normal weather for the rest of the year. Saved in this browser only.
+      </p>
+      <div class="budget-inputs">
+        <label>Heating cost, last year ($)<input id="budget-heat" type="number" min="0" step="10" inputmode="decimal" /></label>
+        <label>Cooling cost, last year ($)<input id="budget-cool" type="number" min="0" step="10" inputmode="decimal" /></label>
+        <label>Base load per year ($, optional)<input id="budget-base" type="number" min="0" step="10" inputmode="decimal" /></label>
+      </div>
+      <div class="stat-grid" id="budget-tiles"></div>
+      <div id="legend-budget" class="legend"></div>
+      <div id="chart-budget" class="chart"></div>
+      <ul class="card-note note-list" id="budget-notes"></ul>
     </section>
 
     <section class="card">
