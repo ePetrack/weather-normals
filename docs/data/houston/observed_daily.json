@@ -91351,6 +91351,97 @@
   },
   {
     "date": "2026-09-24",
+    "tmax": 97.0,
+    "tmin": 76.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-25",
+    "tmax": 93.0,
+    "tmin": 70.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-26",
+    "tmax": 92.0,
+    "tmin": 69.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-27",
+    "tmax": 95.0,
+    "tmin": 71.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-28",
+    "tmax": 95.0,
+    "tmin": 74.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-29",
+    "tmax": 94.0,
+    "tmin": 71.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-09-30",
+    "tmax": 95.0,
+    "tmin": 74.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-01",
+    "tmax": 90.0,
+    "tmin": 76.0,
+    "precip": 0.59,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-02",
+    "tmax": 94.0,
+    "tmin": 74.0,
+    "precip": 0.72,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-03",
+    "tmax": 92.0,
+    "tmin": 75.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-04",
+    "tmax": 81.0,
+    "tmin": 74.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-05",
+    "tmax": 89.0,
+    "tmin": 72.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-06",
+    "tmax": null,
+    "tmin": null,
+    "precip": null,
+    "snow": null
+  },
+  {
+    "date": "2026-10-07",
     "tmax": null,
     "tmin": null,
     "precip": null,
