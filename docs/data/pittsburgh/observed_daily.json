@@ -91435,10 +91435,10 @@
   },
   {
     "date": "2026-10-06",
-    "tmax": null,
-    "tmin": null,
-    "precip": null,
-    "snow": null
+    "tmax": 63.0,
+    "tmin": 38.0,
+    "precip": 0.0,
+    "snow": 0.0
   },
   {
     "date": "2026-10-07",
