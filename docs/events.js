@@ -18,6 +18,7 @@
     yAxisLeft,
     showTooltip,
     syncNavStationParam,
+    dataThroughText,
     intensityBucket,
     intensityColor,
     detectStormEvents,
@@ -78,16 +79,14 @@
         fetchJSON(`${base}/observed_daily.json`),
       ]);
     } catch (err) {
-      container.innerHTML = `<p class="state-message">Data isn't published yet for this station — it appears after the first scheduled (or manually triggered) data-update run completes.</p>`;
+      container.innerHTML = `<p class="state-message">Data isn't available for this station yet.</p>`;
       document.getElementById("last-updated").textContent = "";
       console.error(err);
       return;
     }
 
     const lastObsDate = observed.length ? observed[observed.length - 1].date : null;
-    document.getElementById("last-updated").textContent = lastObsDate
-      ? `Data through ${fmtDate(parseISODate(lastObsDate))}`
-      : "";
+    document.getElementById("last-updated").textContent = dataThroughText(lastObsDate);
 
     const normalByMmdd = new Map(normalsDaily.map((n) => [n.date, n]));
 
