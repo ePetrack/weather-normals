@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-07
+
+### Changed
+
+- **Data pipeline isolates per-station failures**: a failing station no longer
+  blocks the others, and the commit step still runs. The site flags data older
+  than 3 days.
+- **Removed Greensburg, Johnstown, Titusville and Pymatuning** (`KLBE`, `KJST`,
+  `KFKL`, `KYNG`): ACIS returned "no data available" for `KLBE`, which broke
+  every daily run since 2026-09-24. Re-add them with ACIS IDs that have
+  1991–2020 normals.
+
 ## 2026-09-24
 
 ### Added
