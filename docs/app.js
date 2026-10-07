@@ -23,6 +23,7 @@
     presentYears,
     showTooltip,
     syncNavStationParam,
+    dataThroughText,
   } = window.ChartUtils;
   const TEMP_WINDOW_DAYS = 120;
 
@@ -61,8 +62,7 @@
       ]);
     } catch (err) {
       chartIds.forEach((id) => showMessage(id,
-        "Data isn't published yet for this station — it appears after the first " +
-        "scheduled (or manually triggered) data-update run completes."));
+        "Data isn't available for this station yet."));
       document.getElementById("last-updated").textContent = "";
       document.getElementById("rainfall-burnup-note").textContent = "";
       document.getElementById("precip-year-select").innerHTML = "";
@@ -71,9 +71,7 @@
     }
 
     const lastObsDate = observed.length ? observed[observed.length - 1].date : null;
-    document.getElementById("last-updated").textContent = lastObsDate
-      ? `Data through ${fmtDate(parseISODate(lastObsDate))}`
-      : "";
+    document.getElementById("last-updated").textContent = dataThroughText(lastObsDate);
 
     drawRainfallBurnup(normalsDaily, observed);
     drawPrecipByMonth(normalsMonthly, observed);

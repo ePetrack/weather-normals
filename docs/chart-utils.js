@@ -181,6 +181,17 @@
   // Keep the header's page-nav links (Normals <-> Extremes) pointed at
   // whichever station is currently selected, so switching pages doesn't
   // reset the station picker.
+  // "Data through <date>", flagged when the newest observation is more than
+  // STALE_AFTER_DAYS old (the daily update normally lags by about a day).
+  const STALE_AFTER_DAYS = 3;
+  function dataThroughText(lastObsDate) {
+    if (!lastObsDate) return "";
+    const last = parseISODate(lastObsDate);
+    const text = `Data through ${fmtDate(last)}`;
+    const ageDays = (Date.now() - last.getTime()) / 86400000;
+    return ageDays > STALE_AFTER_DAYS ? `${text} (not updated recently)` : text;
+  }
+
   function syncNavStationParam(stationId) {
     document.querySelectorAll(".page-nav a[data-nav-target]").forEach((a) => {
       const url = new URL(a.getAttribute("data-nav-target"), window.location.href);
@@ -229,6 +240,7 @@
     presentYears,
     showTooltip,
     syncNavStationParam,
+    dataThroughText,
     INTENSITY_BUCKETS,
     intensityBucket,
     intensityColor,

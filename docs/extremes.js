@@ -23,6 +23,7 @@
     presentYears,
     showTooltip,
     syncNavStationParam,
+    dataThroughText,
     INTENSITY_BUCKETS,
     intensityBucket,
     intensityColor,
@@ -197,8 +198,7 @@
       chartIds.forEach((id) =>
         showMessage(
           id,
-          "Data isn't published yet for this station — it appears after the first " +
-            "scheduled (or manually triggered) data-update run completes."
+          "Data isn't available for this station yet."
         )
       );
       document.getElementById("last-updated").textContent = "";
@@ -207,9 +207,7 @@
     }
 
     const lastObsDate = observed.length ? observed[observed.length - 1].date : null;
-    document.getElementById("last-updated").textContent = lastObsDate
-      ? `Data through ${fmtDate(parseISODate(lastObsDate))}`
-      : "";
+    document.getElementById("last-updated").textContent = dataThroughText(lastObsDate);
 
     const years = Array.from(new Set(observed.map((d) => Number(d.date.slice(0, 4))))).sort((a, b) => a - b);
 
