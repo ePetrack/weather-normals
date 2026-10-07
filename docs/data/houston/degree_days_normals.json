@@ -1,0 +1,62 @@
+[
+  {
+    "month": 1,
+    "hdd_normal": 366.0,
+    "cdd_normal": 17.0
+  },
+  {
+    "month": 2,
+    "hdd_normal": 236.0,
+    "cdd_normal": 32.0
+  },
+  {
+    "month": 3,
+    "hdd_normal": 122.0,
+    "cdd_normal": 85.0
+  },
+  {
+    "month": 4,
+    "hdd_normal": 31.0,
+    "cdd_normal": 179.0
+  },
+  {
+    "month": 5,
+    "hdd_normal": 1.0,
+    "cdd_normal": 384.0
+  },
+  {
+    "month": 6,
+    "hdd_normal": 0.0,
+    "cdd_normal": 540.0
+  },
+  {
+    "month": 7,
+    "hdd_normal": 0.0,
+    "cdd_normal": 623.0
+  },
+  {
+    "month": 8,
+    "hdd_normal": 0.0,
+    "cdd_normal": 625.0
+  },
+  {
+    "month": 9,
+    "hdd_normal": 0.0,
+    "cdd_normal": 465.0
+  },
+  {
+    "month": 10,
+    "hdd_normal": 26.0,
+    "cdd_normal": 239.0
+  },
+  {
+    "month": 11,
+    "hdd_normal": 158.0,
+    "cdd_normal": 70.0
+  },
+  {
+    "month": 12,
+    "hdd_normal": 325.0,
+    "cdd_normal": 29.0
+  }
+]
