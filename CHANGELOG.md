@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-09
+
+### Added
+
+- **Climate & Energy tab**: heating & cooling day counts per month, an energy
+  budget estimator (enter last year's heating/cooling cost; it is converted to
+  a cost per degree day, then projected for this year with a weather-risk range
+  from the last 10 years, stored in the browser only), and a CSV download
+  button on every chart.
+
+### Changed
+
+- **Climate & Energy tab**: the heating-degree-day chart now uses the calendar
+  year like the others (winter is split across both ends of the chart).
+
 ## 2026-10-08
 
 ### Added
