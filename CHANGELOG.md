@@ -6,6 +6,15 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- **Official degree-day normals**: `scripts/fetch_degree_days.py` fetches NOAA's
+  1991–2020 monthly HDD/CDD normals (base 65°F) from ACIS into
+  `docs/data/<station>/degree_days_normals.json` (only when missing). The
+  Climate & Energy monthly charts use them when present, else the derived
+  values. The workflow step is `continue-on-error` since the request syntax
+  could not be tested from the dev sandbox.
+
+### Added
+
 - **Climate & Energy tab** (`docs/geek.html`): heating, cooling and growing
   degree days (cumulative, monthly and annual with trend), a 30-day
   temperature anomaly, hot/freeze day counts, freeze dates, heat waves and
