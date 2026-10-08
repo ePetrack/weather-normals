@@ -91438,10 +91438,17 @@
     "tmax": 92.0,
     "tmin": 71.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-10-07",
+    "tmax": 93.0,
+    "tmin": 72.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-08",
     "tmax": null,
     "tmin": null,
     "precip": null,
