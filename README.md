@@ -30,6 +30,7 @@ Configured in [`config/stations.yml`](config/stations.yml). Currently:
 - Pittsburgh, PA (`KPIT`)
 - Houston, TX (`KIAH`)
 - Bradford, PA (`KBFD`) — Pitt-Bradford
+- Los Angeles, CA (`KLAX`)
 
 Add another station by adding an entry there — the pipeline and site both
 pick it up automatically on the next data run.
