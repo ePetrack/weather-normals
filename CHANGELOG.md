@@ -6,6 +6,8 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- **Los Angeles, CA (`KLAX`)**: added as a tracked station and to the site's
+  station picker. Data populates on the next run of the data-update workflow.
 - **Climate & Energy tab**: heating & cooling day counts per month, an energy
   budget estimator (enter last year's heating/cooling cost; it is converted to
   a cost per degree day, then projected for this year with a weather-risk range
