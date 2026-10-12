@@ -12,3 +12,6 @@ stations:
   - id: bradford
     name: "Bradford, PA"
     sid: "KBFD"
+  - id: losangeles
+    name: "Los Angeles, CA"
+    sid: "KLAX"
