@@ -44,6 +44,38 @@
       windowStart: "2026-08-24",
       windowEnd: "2026-09-05",
     },
+    {
+      id: "2026-09-06-la-rain",
+      station: "losangeles",
+      title: "The September 6 record rain",
+      peakDate: "2026-09-06",
+      windowStart: "2026-08-28",
+      windowEnd: "2026-09-10",
+    },
+    {
+      id: "2026-02-16-la-storm",
+      station: "losangeles",
+      title: "The February 16 storm",
+      peakDate: "2026-02-16",
+      windowStart: "2026-02-08",
+      windowEnd: "2026-02-22",
+    },
+    {
+      id: "2025-12-24-la-christmas-eve",
+      station: "losangeles",
+      title: "The Christmas Eve atmospheric river",
+      peakDate: "2025-12-24",
+      windowStart: "2025-12-16",
+      windowEnd: "2025-12-30",
+    },
+    {
+      id: "2025-11-15-la-atmospheric-river",
+      station: "losangeles",
+      title: "The mid-November atmospheric river",
+      peakDate: "2025-11-15",
+      windowStart: "2025-11-07",
+      windowEnd: "2025-11-22",
+    },
   ];
 
   async function main() {

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## 2026-10-12
+
+### Added
+
+- **Events tab**: four Los Angeles storm spotlights (Nov 15 and Dec 24, 2025;
+  Feb 16 and Sep 6, 2026).
+
 ## 2026-10-09
 
 ### Added
