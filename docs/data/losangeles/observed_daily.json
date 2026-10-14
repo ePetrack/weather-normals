@@ -91484,6 +91484,13 @@
   },
   {
     "date": "2026-10-13",
+    "tmax": 73.0,
+    "tmin": 55.0,
+    "precip": 0.0,
+    "snow": null
+  },
+  {
+    "date": "2026-10-14",
     "tmax": null,
     "tmin": null,
     "precip": null,
