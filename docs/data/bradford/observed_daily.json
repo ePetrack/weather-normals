@@ -91505,6 +91505,13 @@
   },
   {
     "date": "2026-10-16",
+    "tmax": 68.0,
+    "tmin": 41.0,
+    "precip": 0.55,
+    "snow": null
+  },
+  {
+    "date": "2026-10-17",
     "tmax": null,
     "tmin": null,
     "precip": null,
