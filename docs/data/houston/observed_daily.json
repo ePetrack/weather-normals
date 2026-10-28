@@ -91578,10 +91578,17 @@
     "tmax": 85.0,
     "tmin": 58.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-10-27",
+    "tmax": 74.0,
+    "tmin": 60.0,
+    "precip": 0.16,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-28",
     "tmax": null,
     "tmin": null,
     "precip": null,
