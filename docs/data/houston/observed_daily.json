@@ -91603,6 +91603,13 @@
   },
   {
     "date": "2026-10-30",
+    "tmax": 80.0,
+    "tmin": 64.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-10-31",
     "tmax": null,
     "tmin": null,
     "precip": null,
