@@ -91620,10 +91620,17 @@
     "tmax": 88.0,
     "tmin": 67.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-02",
+    "tmax": 88.0,
+    "tmin": 66.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-11-03",
     "tmax": null,
     "tmin": null,
     "precip": null,
