@@ -91620,31 +91620,38 @@
     "tmax": 68.0,
     "tmin": 48.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-02",
     "tmax": 72.0,
     "tmin": 52.0,
     "precip": null,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-03",
     "tmax": 76.0,
     "tmin": 56.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-04",
     "tmax": 79.0,
     "tmin": 53.0,
     "precip": 0.08,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-05",
+    "tmax": 69.0,
+    "tmin": 51.0,
+    "precip": 0.1,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-11-06",
     "tmax": null,
     "tmin": null,
     "precip": null,
