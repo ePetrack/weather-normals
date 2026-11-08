@@ -91655,10 +91655,17 @@
     "tmax": 83.0,
     "tmin": 60.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-07",
+    "tmax": 81.0,
+    "tmin": 63.0,
+    "precip": 0.0,
+    "snow": null
+  },
+  {
+    "date": "2026-11-08",
     "tmax": null,
     "tmin": null,
     "precip": null,
