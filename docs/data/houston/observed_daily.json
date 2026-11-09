@@ -91662,10 +91662,17 @@
     "tmax": 81.0,
     "tmin": 63.0,
     "precip": 0.0,
-    "snow": null
+    "snow": 0.0
   },
   {
     "date": "2026-11-08",
+    "tmax": 66.0,
+    "tmin": 58.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-11-09",
     "tmax": null,
     "tmin": null,
     "precip": null,
