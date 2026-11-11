@@ -91680,6 +91680,13 @@
   },
   {
     "date": "2026-11-10",
+    "tmax": 64.0,
+    "tmin": 35.0,
+    "precip": 0.0,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-11-11",
     "tmax": null,
     "tmin": null,
     "precip": null,
