@@ -91722,6 +91722,13 @@
   },
   {
     "date": "2026-11-16",
+    "tmax": 46.0,
+    "tmin": 31.0,
+    "precip": null,
+    "snow": 0.0
+  },
+  {
+    "date": "2026-11-17",
     "tmax": null,
     "tmin": null,
     "precip": null,
