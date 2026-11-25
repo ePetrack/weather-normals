@@ -91778,6 +91778,13 @@
   },
   {
     "date": "2026-11-24",
+    "tmax": 60.0,
+    "tmin": 44.0,
+    "precip": 0.03,
+    "snow": null
+  },
+  {
+    "date": "2026-11-25",
     "tmax": null,
     "tmin": null,
     "precip": null,
